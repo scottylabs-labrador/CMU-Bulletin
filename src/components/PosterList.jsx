@@ -1,43 +1,52 @@
+// Import React hooks and router utilities
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+
+// Import Firestore SDK functions and database instance
 import { db } from '../firebase';
 import { collection, query, onSnapshot, orderBy, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
-import Modal from './Modal'; // Import the new Modal component
 
-// Helper function to check if a recurring event occurs on a specific date
+// Import the modal component for poster details
+import Modal from './Modal';
+
+/*================================================================================
+Helper Function #1: Check if a recurring event occurs on a given date
+================================================================================*/
 const isRecurringEventOnDate = (poster, checkDateString) => {
+  // If it's not a repeating event or missing the recurrence start, it can't recur
   if (!poster.repeating || !poster.next_occurring_date) {
     return false;
   }
 
-  // Add T00:00:00 to avoid timezone issues when creating Date objects from YYYY-MM-DD strings
+  // Construct date objects safely by adding T00:00:00 to avoid timezone errors
   const checkDate = new Date(`${checkDateString}T00:00:00`);
   const startDate = new Date(`${poster.next_occurring_date}T00:00:00`);
 
-  // The date to check must be on or after the start date of the event.
+  // Event can't occur before its start date
   if (checkDate < startDate) {
     return false;
   }
 
-  const frequency = poster.frequency;
-  const daysOfWeek = poster.days_of_week || []; // ['Monday', 'Tuesday', ...]
+  const frequency = poster.frequency; // e.g. "daily", "weekly", etc.
+  const daysOfWeek = poster.days_of_week || []; // e.g. ['Monday', 'Wednesday']
   const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const checkDayName = dayMap[checkDate.getDay()];
+  const checkDayName = dayMap[checkDate.getDay()]; // Convert date to weekday string
 
-  // For any repeating event, it must fall on an allowed day of the week if specified.
+  // If event specifies which weekdays it happens on, ensure this day is one of them
   if (daysOfWeek.length > 0 && !daysOfWeek.includes(checkDayName)) {
     return false;
   }
 
+  // Determine recurrence by frequency type
   switch (frequency) {
     case 'daily':
-      return true;
+      return true; // Happens every day
 
     case 'weekly':
-      return true; // The day of the week check above is sufficient
+      return true; // Weekly recurrence, day-of-week check already handled
 
     case 'bi-weekly': {
-      // Find the start of the week for both dates (Sunday = 0)
+      // Compute how many weeks apart the dates are and ensure it's an even multiple of 2
       const weekStartForStartDate = new Date(startDate.getTime());
       weekStartForStartDate.setDate(startDate.getDate() - startDate.getDay());
       weekStartForStartDate.setHours(0, 0, 0, 0);
@@ -48,11 +57,11 @@ const isRecurringEventOnDate = (poster, checkDateString) => {
 
       const weekDiff = Math.round((weekStartForCheckDate - weekStartForStartDate) / (1000 * 60 * 60 * 24 * 7));
 
-      return weekDiff % 2 === 0;
+      return weekDiff % 2 === 0; // Occurs every other week
     }
 
     case 'monthly':
-      // Assuming 'monthly' means it occurs on the same date of the month.
+      // Occurs on the same date of the month (e.g. every 15th)
       return startDate.getDate() === checkDate.getDate();
 
     default:
@@ -60,7 +69,9 @@ const isRecurringEventOnDate = (poster, checkDateString) => {
   }
 };
 
-// Helper function to find the next occurrence of a recurring event on or after a given date
+// =====================================================
+// Helper Function #2: Find next occurrence of a recurring event
+// =====================================================
 const findNextOccurrence = (poster, fromDateString) => {
   if (!poster.repeating || !poster.next_occurring_date) {
     return null;
@@ -69,10 +80,10 @@ const findNextOccurrence = (poster, fromDateString) => {
   const fromDate = new Date(`${fromDateString}T00:00:00`);
   const startDate = new Date(`${poster.next_occurring_date}T00:00:00`);
 
-  // Start checking from the later of fromDate or the event's original start date
+  // Start checking from the later of fromDate or event start
   let checkDate = new Date(Math.max(fromDate.getTime(), startDate.getTime()));
 
-  // Limit the search to prevent infinite loops (e.g., 1 year)
+  // Limit search to within 1 year (avoid infinite loops)
   const searchLimit = new Date(fromDate);
   searchLimit.setFullYear(searchLimit.getFullYear() + 1);
 
@@ -81,44 +92,135 @@ const findNextOccurrence = (poster, fromDateString) => {
     if (isRecurringEventOnDate(poster, checkDateFormatted)) {
       return checkDateFormatted;
     }
-    checkDate.setDate(checkDate.getDate() + 1); // Move to the next day
+    // Increment day by 1 and continue checking
+    checkDate.setDate(checkDate.getDate() + 1);
   }
 
-  return null; // No future occurrence found within the limit
+  return null; // No next date found within limit
 };
 
-function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user }) {
-  const [allPosters, setAllPosters] = useState([]);
-  const [filteredPosters, setFilteredPosters] = useState([]);
-  const [selectedPoster, setSelectedPoster] = useState(null);
-  const [likedPosters, setLikedPosters] = useState([]);
-  const [uploaderNames, setUploaderNames] = useState({});
-  const { category } = useParams();
+/**********************************************************************************/
 
+// Build Google Calendar event date/time strings and a share link
+// Supports timed events and all-day events. For repeating events we use the
+// next occurring date as the event instance.
+const toGoogleDateTime = (dateStr, timeStr) => {
+  // dateStr expected 'YYYY-MM-DD', timeStr expected 'HH:MM' (24h) or undefined
+  if (!dateStr) return null;
+
+  if (!timeStr) {
+    // All-day event format: YYYYMMDD (end date should be exclusive)
+    const start = dateStr.replace(/-/g, '');
+    // End is next day for Google all-day events
+    const d = new Date(`${dateStr}T00:00:00`);
+    d.setDate(d.getDate() + 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const end = `${year}${month}${day}`;
+    return `${start}/${end}`;
+  }
+
+  // Timed event: construct local Date then convert to UTC parts
+  const local = new Date(`${dateStr}T${timeStr}:00`);
+  const y = local.getUTCFullYear();
+  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(local.getUTCDate()).padStart(2, '0');
+  const hh = String(local.getUTCHours()).padStart(2, '0');
+  const min = String(local.getUTCMinutes()).padStart(2, '0');
+  const ss = '00';
+  return `${y}${m}${d}T${hh}${min}${ss}Z`;
+};
+
+const createGoogleCalendarLink = (poster) => {
+  if (!poster) return null;
+  const title = poster.title || 'Event';
+  const description = poster.description || '';
+  const location = Array.isArray(poster.location) ? poster.location.join(', ') : (poster.location || '');
+
+  // Choose event date: for repeating events prefer next_occurring_date or fallback to finding one
+  const today = new Date().toISOString().split('T')[0];
+  const eventDate = poster.single_event_date || poster.next_occurring_date || (poster.repeating ? findNextOccurrence(poster, today) : null);
+  if (!eventDate) return null;
+
+  // If we have start/end times, create timed event; otherwise all-day
+  const hasStart = Boolean(poster.start_time);
+  const hasEnd = Boolean(poster.end_time);
+
+  let datesParam = '';
+  if (hasStart && hasEnd) {
+    const start = toGoogleDateTime(eventDate, poster.start_time);
+    const end = toGoogleDateTime(eventDate, poster.end_time);
+    // toGoogleDateTime returns strings; for timed events they include 'Z'
+    datesParam = `${start}/${end}`;
+  } else {
+    // All-day event: Google expects YYYYMMDD/YYYYMMDD (end exclusive)
+    datesParam = toGoogleDateTime(eventDate, undefined);
+  }
+
+  // Add quick note for repeating events so user understands if it was a single instance
+  const details = poster.repeating ? `${description}\n\n(Recurring: ${poster.frequency || 'repeating'})` : description;
+
+  const params = new URLSearchParams();
+  params.set('action', 'TEMPLATE');
+  params.set('text', title);
+  params.set('dates', datesParam);
+  if (details) params.set('details', details);
+  if (location) params.set('location', location);
+
+  return `https://www.google.com/calendar/render?${params.toString()}`;
+};
+
+/**********************************************************************************/
+
+
+// =====================================================
+// Main Component: PosterList
+// =====================================================
+function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user }) {
+  // Local state variables
+  const [allPosters, setAllPosters] = useState([]);         // All posters fetched from DB
+  const [filteredPosters, setFilteredPosters] = useState([]); // Posters after applying filters
+  const [selectedPoster, setSelectedPoster] = useState(null); // Poster currently shown in modal
+  const [likedPosters, setLikedPosters] = useState([]);       // IDs of posters liked by user
+  const [uploaderNames, setUploaderNames] = useState({});     // Map of poster uploader IDs → names
+  const { category } = useParams(); // Category from URL (e.g. "/category/music")
+
+  // --------------------------------------------
+  // Fetch posters in real time from Firestore
+  // --------------------------------------------
   useEffect(() => {
     const q = query(collection(db, 'posters'));
 
+    // Subscribe to Firestore snapshot updates
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const postersData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })).sort((a, b) => {
+      // Convert snapshot docs into JS objects
+      const postersData = snapshot.docs.map((doc) => {
+        const poster = {
+          id: doc.id,
+          ...doc.data(),
+        };
+        // Canonical calendar URL property used across the app
+        const calUrl = createGoogleCalendarLink(poster);
+        poster.googleCalUrl = calUrl;
+        return poster;
+      })
+      // Sort by event date, then creation date
+      .sort((a, b) => {
         const dateA = a.sort_date || (a.repeating ? a.next_occurring_date : a.single_event_date);
         const dateB = b.sort_date || (b.repeating ? b.next_occurring_date : b.single_event_date);
-
         const compareDates = new Date(dateA) - new Date(dateB);
-        if (compareDates !== 0) {
-          return compareDates;
-        }
+        if (compareDates !== 0) return compareDates;
 
-        // If dates are the same, sort by created_at (oldest first)
+        // Secondary sort: by creation timestamp
         const createdAtA = a.created_at ? a.created_at.toDate() : new Date(0);
         const createdAtB = b.created_at ? b.created_at.toDate() : new Date(0);
         return createdAtA - createdAtB;
       });
+
       setAllPosters(postersData);
 
-      const uploaderIds = [...new Set(postersData.map(p => p.uploaded_by))];
+      // Resolve uploader names (from organizer field or users collection)
       const names = {};
       for (const poster of postersData) {
         if (poster.organizer) {
@@ -133,48 +235,59 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
       setUploaderNames(names);
     });
 
+    // Cleanup Firestore listener on unmount
     return () => unsubscribe();
   }, []);
 
+  // --------------------------------------------
+  // Listen for liked posters for current user
+  // --------------------------------------------
   useEffect(() => {
     if (user) {
       const likedRef = collection(db, `users/${user.uid}/likedPosters`);
       const unsubscribeLiked = onSnapshot(likedRef, (snapshot) => {
-        setLikedPosters(snapshot.docs.map(doc => doc.id));
+        setLikedPosters(snapshot.docs.map(doc => doc.id)); // Store liked poster IDs
       });
       return () => unsubscribeLiked();
     } else {
-      setLikedPosters([]);
+      setLikedPosters([]); // If user logged out, reset likes
     }
   }, [user]);
 
+  // --------------------------------------------
+  // Like/Unlike button handler
+  // --------------------------------------------
   const handleLikeToggle = async (posterId) => {
     console.log('handleLikeToggle called for posterId:', posterId);
     if (!user) {
       alert('Please sign in to like posters.');
       return;
     }
+
     const likedRef = doc(db, `users/${user.uid}/likedPosters`, posterId);
     if (likedPosters.includes(posterId)) {
-      // Unlike
+      // If already liked, remove the like
       console.log('Unliking poster:', posterId);
       await deleteDoc(likedRef);
     } else {
-      // Like
+      // Otherwise, add a like
       console.log('Liking poster:', posterId);
-      await setDoc(likedRef, {}); // Empty object as we only care about the doc ID
+      await setDoc(likedRef, {}); // Empty object (we only care about the doc ID)
     }
+
     console.log('Current likedPosters after toggle:', likedPosters);
   };
 
+  // --------------------------------------------
+  // Filter posters by date, category, tags, etc.
+  // --------------------------------------------
   useEffect(() => {
     const filterCategory = category || 'All';
-
     let currentPosters = allPosters;
 
-    // Only filter out past events if no specific filterDate is selected
+    // Exclude past events unless a specific filterDate is selected
     if (!filterDate) {
-      const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
       currentPosters = allPosters.filter(poster => {
         if (poster.repeating) {
           return findNextOccurrence(poster, today) !== null;
@@ -184,29 +297,34 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
       });
     }
 
+    // Filter by category
     if (filterCategory !== 'All') {
-      currentPosters = currentPosters.filter(poster => 
+      currentPosters = currentPosters.filter(poster =>
         poster.category && poster.category.includes(filterCategory)
       );
     }
 
+    // Filter by date (if selected)
     if (filterDate) {
-        currentPosters = currentPosters.filter(poster => {
-            if (poster.repeating) {
-                return isRecurringEventOnDate(poster, filterDate);
-            } else {
-                return poster.single_event_date === filterDate;
-            }
-        });
+      currentPosters = currentPosters.filter(poster => {
+        if (poster.repeating) {
+          return isRecurringEventOnDate(poster, filterDate);
+        } else {
+          return poster.single_event_date === filterDate;
+        }
+        
+      });
     }
 
+    // Filter by search query (title or description)
     if (searchQuery) {
-      currentPosters = currentPosters.filter(poster => 
+      currentPosters = currentPosters.filter(poster =>
         poster.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         poster.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
+    // Filter by selected locations
     if (filterLocations.length > 0) {
       currentPosters = currentPosters.filter(poster =>
         filterLocations.some(location =>
@@ -215,6 +333,7 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
       );
     }
 
+    // Filter by selected tags
     if (filterTags.length > 0) {
       currentPosters = currentPosters.filter(poster =>
         filterTags.some(tag =>
@@ -223,9 +342,15 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
       );
     }
 
+    console.log("DEBUG: Final Filtered Poster List:", currentPosters);
+
+    // Apply final filtered set
     setFilteredPosters(currentPosters);
   }, [category, allPosters, filterDate, searchQuery, filterLocations, filterTags]);
 
+  // --------------------------------------------
+  // Modal open/close handlers
+  // --------------------------------------------
   const handlePosterClick = (poster) => {
     setSelectedPoster(poster);
   };
@@ -234,25 +359,35 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
     setSelectedPoster(null);
   };
 
+  // --------------------------------------------
+  // JSX Render: Poster Grid
+  // --------------------------------------------
   return (
     <div className="poster-grid">
       {filteredPosters.length === 0 ? (
+        // Empty state if no posters match filters
         <div className="empty-state">
           <h2>No posters yet.</h2>
           <p>Be the first to share something!</p>
         </div>
       ) : (
+        // Render poster cards
         filteredPosters.map((poster) => (
-          <div key={poster.id} className="poster-card">
-            <img src={poster.image_url} alt={poster.title} onClick={() => handlePosterClick(poster)} />
+          <div key={poster.id} className="poster-card" style={{ position: 'relative' }}>
+            <img
+              src={poster.image_url}
+              alt={poster.title}
+              onClick={() => handlePosterClick(poster)}
+            />
           </div>
         ))
       )}
 
+      {/* Conditionally render modal for selected poster */}
       {selectedPoster && (
-        <Modal 
-          poster={selectedPoster} 
-          onClose={handleCloseModal} 
+        <Modal
+          poster={selectedPoster}
+          onClose={handleCloseModal}
           user={user}
           likedPosters={likedPosters}
           handleLikeToggle={handleLikeToggle}
@@ -263,4 +398,5 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   );
 }
 
+// Export component
 export default PosterList;
