@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
+import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import './UserProfile.css'; // Import the new CSS file
@@ -26,10 +27,12 @@ function UserProfile() {
 
       const q = query(collection(db, 'posters'), where('uploaded_by', '==', currentUser.uid));
       const unsubscribePosts = onSnapshot(q, async (snapshot) => {
-        const postsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const postsData = snapshot.docs.map((doc) => {
+          const poster = { id: doc.id, ...doc.data() };
+          // Attach googleCalUrl for in-profile display (QR + link)
+          poster.googleCalUrl = createGoogleCalendarLink(poster);
+          return poster;
+        });
         setUserPosts(postsData);
 
         const uploaderIds = [...new Set(postsData.map(p => p.uploaded_by))];
@@ -54,7 +57,9 @@ function UserProfile() {
         for (const id of likedIds) {
           const posterDoc = await getDoc(doc(db, 'posters', id));
           if (posterDoc.exists()) {
-            fetchedLikedPosters.push({ id: posterDoc.id, ...posterDoc.data() });
+            const poster = { id: posterDoc.id, ...posterDoc.data() };
+            poster.googleCalUrl = createGoogleCalendarLink(poster);
+            fetchedLikedPosters.push(poster);
           }
         }
         setLikedPostersData(fetchedLikedPosters);
@@ -81,6 +86,70 @@ function UserProfile() {
       };
     }
   }, [currentUser]);
+
+  // -------------------------
+  // Calendar link helpers
+  // -------------------------
+  // Build Google Calendar event date/time strings and a share link
+  // Supports timed events and all-day events. For repeating events we use the
+  // next occurring date as the event instance.
+  const toGoogleDateTime = (dateStr, timeStr) => {
+    if (!dateStr) return null;
+
+    if (!timeStr) {
+      const start = dateStr.replace(/-/g, '');
+      const d = new Date(`${dateStr}T00:00:00`);
+      d.setDate(d.getDate() + 1);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const end = `${year}${month}${day}`;
+      return `${start}/${end}`;
+    }
+
+    const local = new Date(`${dateStr}T${timeStr}:00`);
+    const y = local.getUTCFullYear();
+    const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(local.getUTCDate()).padStart(2, '0');
+    const hh = String(local.getUTCHours()).padStart(2, '0');
+    const min = String(local.getUTCMinutes()).padStart(2, '0');
+    const ss = '00';
+    return `${y}${m}${d}T${hh}${min}${ss}Z`;
+  };
+
+  const createGoogleCalendarLink = (poster) => {
+    if (!poster) return null;
+    const title = poster.title || 'Event';
+    const description = poster.description || '';
+    const location = Array.isArray(poster.location) ? poster.location.join(', ') : (poster.location || '');
+
+    const today = new Date().toISOString().split('T')[0];
+    const eventDate = poster.single_event_date || poster.next_occurring_date || (poster.repeating ? findNextOccurrence(poster, today) : null);
+    if (!eventDate) return null;
+
+    const hasStart = Boolean(poster.start_time);
+    const hasEnd = Boolean(poster.end_time);
+
+    let datesParam = '';
+    if (hasStart && hasEnd) {
+      const start = toGoogleDateTime(eventDate, poster.start_time);
+      const end = toGoogleDateTime(eventDate, poster.end_time);
+      datesParam = `${start}/${end}`;
+    } else {
+      datesParam = toGoogleDateTime(eventDate, undefined);
+    }
+
+    const details = poster.repeating ? `${description}\n\n(Recurring: ${poster.frequency || 'repeating'})` : description;
+
+    const params = new URLSearchParams();
+    params.set('action', 'TEMPLATE');
+    params.set('text', title);
+    params.set('dates', datesParam);
+    if (details) params.set('details', details);
+    if (location) params.set('location', location);
+
+    return `https://www.google.com/calendar/render?${params.toString()}`;
+  };
 
   useEffect(() => {
     if (selectedPoster && selectedPoster.uploaded_by) {
@@ -175,21 +244,35 @@ function UserProfile() {
 
       <div className="profile-posts">
         <h3>Your Posts</h3>
-        {userPosts.length === 0 ? (
+            {userPosts.length === 0 ? (
           <p>You haven't posted anything yet.</p>
         ) : (
           <div className="poster-grid">
             {userPosts.map((poster) => (
-              <div key={poster.id} className="poster-card" onClick={() => handlePosterClick(poster)}>
-                <img src={poster.image_url} alt={poster.title} />
-                <div className="poster-card-content">
-                  <h4>{poster.title}</h4>
-                  <p><strong>{poster.organizer ? 'Organizer:' : 'Posted by:'}</strong> {poster.organizer || uploaderNames[poster.uploaded_by] || 'Unknown'}</p>
-                  <p>{poster.description}</p>
-                  <button onClick={(e) => {e.stopPropagation(); handleEditPost(poster.id)}} className="btn">Edit</button>
-                  <button onClick={(e) => {e.stopPropagation(); handleDeletePost(poster.id)}} className="btn" style={{ marginLeft: '10px', backgroundColor: '#dc3545' }}>Delete</button>
-                </div>
-              </div>
+                  <div key={poster.id} className="poster-card" onClick={() => handlePosterClick(poster)}>
+                    <img src={poster.image_url} alt={poster.title} />
+                    <div className="poster-card-content">
+                      <h4>{poster.title}</h4>
+                      <p><strong>{poster.organizer ? 'Organizer:' : 'Posted by:'}</strong> {poster.organizer || uploaderNames[poster.uploaded_by] || 'Unknown'}</p>
+                      <p>{poster.description}</p>
+
+                      {poster.googleCalUrl && (
+                        <div className="calendar-export-section" style={{ marginTop: '10px' }} onClick={(e) => e.stopPropagation()}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <QRCodeSVG value={poster.googleCalUrl} size={80} level="L" />
+                            <div>
+                              <a href={poster.googleCalUrl} target="_blank" rel="noopener noreferrer" className="calendar-link">Add to Google Calendar</a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: '10px' }}>
+                        <button onClick={(e) => {e.stopPropagation(); handleEditPost(poster.id)}} className="btn">Edit</button>
+                        <button onClick={(e) => {e.stopPropagation(); handleDeletePost(poster.id)}} className="btn" style={{ marginLeft: '10px', backgroundColor: '#dc3545' }}>Delete</button>
+                      </div>
+                    </div>
+                  </div>
             ))}
           </div>
         )}
@@ -206,6 +289,18 @@ function UserProfile() {
                   <h4>{poster.title}</h4>
                   <p><strong>{poster.organizer ? 'Organizer:' : 'Posted by:'}</strong> {poster.organizer || uploaderNames[poster.uploaded_by] || 'Unknown'}</p>
                   <p>{poster.description}</p>
+
+                  {poster.googleCalUrl && (
+                    <div className="calendar-export-section" style={{ marginTop: '10px' }} onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <QRCodeSVG value={poster.googleCalUrl} size={80} level="L" />
+                        <div>
+                          <a href={poster.googleCalUrl} target="_blank" rel="noopener noreferrer" className="calendar-link">Add to Google Calendar</a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               </div>
             ))}
