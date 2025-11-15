@@ -103,7 +103,7 @@ button, .btn {
 }
 
 button:hover, .btn:hover {
-  background-color: #a00f28;
+  background-color: #a00f28; 
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 

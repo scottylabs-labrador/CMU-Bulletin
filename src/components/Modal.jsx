@@ -1,9 +1,12 @@
 // src/components/Modal.jsx
 import React from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import HeartIcon from './HeartIcon';
 
 function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploaderName }) {
   if (!poster) return null;
+
+  const googleCalUrl = poster.googleCalUrl;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -48,6 +51,31 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
                 <p><strong>Frequency:</strong> {poster.frequency}</p>
                 <p><strong>Days:</strong> {poster.days_of_week.join(', ')}</p>
               </>
+            )}
+
+          {googleCalUrl && (
+              <div className="calendar-export-section" style={{ marginTop: '20px', textAlign: 'center' }}>
+                  <h4 style={{ marginBottom: '10px', fontSize: '1rem', fontWeight: 'bold' }}>Add to Calendar</h4>
+                  
+                  {/* QR Code */}
+                  <QRCodeSVG 
+                      value={googleCalUrl}
+                      size={100}
+                      level="L"
+                  />
+
+                  {/* Direct Clickable Link */}
+                  <p style={{ marginTop: '10px' }}>
+                      <a 
+                          href={googleCalUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="calendar-link"
+                      >
+                          Click to Add to Google Calendar
+                      </a>
+                  </p>
+              </div>
             )}
           </div>
         </div>
