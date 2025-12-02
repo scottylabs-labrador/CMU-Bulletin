@@ -177,7 +177,7 @@ const createGoogleCalendarLink = (poster) => {
 // =====================================================
 // Main Component: PosterList
 // =====================================================
-function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user }) {
+function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user, viewMode }) {
   // Local state variables
   const [allPosters, setAllPosters] = useState([]);         // All posters fetched from DB
   const [filteredPosters, setFilteredPosters] = useState([]); // Posters after applying filters
@@ -363,27 +363,48 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   // JSX Render: Poster Grid
   // --------------------------------------------
   return (
-    <div className="poster-grid">
-      {filteredPosters.length === 0 ? (
-        // Empty state if no posters match filters
-        <div className="empty-state">
-          <h2>No posters yet.</h2>
-          <p>Be the first to share something!</p>
-        </div>
-      ) : (
-        // Render poster cards
-        filteredPosters.map((poster) => (
-          <div key={poster.id} className="poster-card" style={{ position: 'relative' }}>
-            <img
-              src={poster.image_url}
-              alt={poster.title}
-              onClick={() => handlePosterClick(poster)}
-            />
+  <div>
+    {/* Render Posters Based on the Current View Mode */}
+    {viewMode === 'grid' ? ( 
+      <div className="poster-grid">
+        {filteredPosters.length === 0 ? (
+          <div className="empty-state">
+            <h2>No posters yet.</h2>
+            <p>Be the first to share something!</p>
           </div>
-        ))
-      )}
-
-      {/* Conditionally render modal for selected poster */}
+        ) : (
+          filteredPosters.map((poster) => (
+            <div key={poster.id} className="poster-card">
+              <img src={poster.image_url} alt={poster.title} onClick={() => handlePosterClick(poster)} />
+            </div>
+          ))
+        )}
+      </div>
+    ) : (
+      <ul className="poster-list">
+        {filteredPosters.length === 0 ? (
+          <div className="empty-state">
+            <h2>No posters yet.</h2>
+            <p>Be the first to share something!</p>
+          </div>
+        ) : (
+          filteredPosters.map((poster) => (
+            <li key={poster.id} className="poster-item" onClick={() => handlePosterClick(poster)}>
+              <div className="poster-item-content">
+                <img src={poster.image_url} width={50} height={50} alt={poster.title} className="poster-thumbnail" />
+                <div className="poster-details">
+                  <h3>{poster.title}</h3>
+                  <p>{poster.description}</p>
+                  <small>Location: {poster.location.join(', ')}</small>
+                </div>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
+    )}
+    
+    {/* Modal handling */}
       {selectedPoster && (
         <Modal
           poster={selectedPoster}

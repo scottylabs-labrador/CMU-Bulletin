@@ -4,7 +4,7 @@ import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import MultiSelectDropdown from './MultiSelectDropdown';
 
-function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocations, setFilterLocations, filterTags, setFilterTags, searchQuery, setSearchQuery, availableTags }) {
+function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocations, setFilterLocations, filterTags, setFilterTags, searchQuery, setSearchQuery, availableTags, toggleViewMode }) {
   const [searchInput, setSearchInput] = useState('');
   const location = useLocation();
   const isProfilePage = location.pathname === '/profile';
@@ -84,6 +84,11 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
             value={searchInput}
             onChange={handleSearchChange}
           />
+          
+          <button onClick={toggleViewMode}>
+            {toggleViewMode ? 'List' : 'Grid'} View
+          </button>
+
         </div>
       )}
     </header>
