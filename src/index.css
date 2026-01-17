@@ -12,6 +12,8 @@
   --error-color: #dc3545;
 }
 
+
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--background-color);
@@ -37,6 +39,16 @@ header {
   align-items: center;
   padding: 1rem 2rem;
   border-bottom: 1px solid var(--border-color);
+}
+.website-title { 
+  margin-left: 5px; 
+  margin-top: 0; 
+  padding: 10px;
+  font-weight: normal;
+}
+
+.title-logo {
+  display: flex;
 }
 
 .top-bar h1 {

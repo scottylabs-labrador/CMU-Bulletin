@@ -36,7 +36,21 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
   return (
     <header>
       <div className="top-bar">
-        <h1><Link to="/">CMU Bulletin</Link></h1>
+        <div className = "title-logo"> 
+          <img src = "./logo-small.png"></img>
+          <h1 class="website-title">
+            <Link to="/">CMU <br/>Bulletin</Link>
+          </h1>
+        </div>
+
+        <div className = "search-bar">
+          <h2>search bar will go here!</h2>
+        </div> 
+
+        {/* search bar is currently implemented lower down... 
+        want to work on filtering w both icons + search query*/}
+        
+        
         <div>
           {user ? (
             <>
