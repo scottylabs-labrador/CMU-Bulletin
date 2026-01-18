@@ -13,6 +13,14 @@
 }
 
 
+/* updated color palette for later */
+/* :root {
+  --light-gray: #7B7B7B;
+  --
+
+} */
+
+
 
 body {
   font-family: 'Inter', sans-serif;
@@ -108,7 +116,7 @@ button, .btn {
   color: white;
   border: none;
   padding: 0.6rem 1.2rem;
-  border-radius: 5px;
+  border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.3s, box-shadow 0.3s;
   font-weight: 600;
@@ -130,11 +138,45 @@ button:hover, .btn:hover {
   color: var(--primary-color);
 }
 
+/* Search Bar Styling */
+
+.search-bar {
+  display: flex;
+  justify-content: center;
+  width: 100%; 
+  max-width: 600px;
+  margin: 0 auto; 
+}
+
+.search-bar input {
+  width: 100%; 
+  max-width: 100%; 
+  padding: 10px 15px; 
+  font-size: 16px; 
+  margin-left: 20px;
+  /* border-radius: 20px; */
+}
+
+
+
+@media (min-width: 768px) {
+  .search-bar input {
+    width: 50%; /* Adjust width based on screen size (50% of the container) */
+  }
+}
+
+@media (min-width: 1024px) {
+  .search-bar input {
+    width: 40%; /* Adjust width for even larger screens */
+  }
+}
+
 /* Forms and Inputs */
 input[type="text"], input[type="email"], input[type="password"], input[type="date"], textarea {
+  /* this also controls the search bar so need to style it separately somehow */
   padding: 0.75rem;
   border: 1px solid var(--border-color);
-  border-radius: 5px;
+  border-radius: 15px;
   width: 100%;
   box-sizing: border-box;
   transition: border-color 0.3s, box-shadow 0.3s;

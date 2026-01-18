@@ -44,11 +44,16 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
         </div>
 
         <div className = "search-bar">
-          <h2>search bar will go here!</h2>
+          <img src="./search-icon.svg" alt="Search" className="search-icon" />
+          
+          
+          <input
+            type="text"
+            placeholder="Search for events, information..."
+            value={searchInput}
+            onChange={handleSearchChange}
+          />
         </div> 
-
-        {/* search bar is currently implemented lower down... 
-        want to work on filtering w both icons + search query*/}
         
         
         <div>
@@ -92,12 +97,12 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
             selectedOptions={filterTags}
             onChange={setFilterTags}
           />
-          <input
+          {/* <input
             type="text"
             placeholder="Search"
             value={searchInput}
             onChange={handleSearchChange}
-          />
+          /> */}
           
           <button onClick={toggleViewMode}>
             {toggleViewMode ? 'List' : 'Grid'} View
