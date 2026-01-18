@@ -179,7 +179,7 @@ input:focus, textarea:focus {
 
 .poster-card img {
   width: 100%;
-  height: 200px;
+  height: auto;
   object-fit: cover;
 }
 
@@ -190,6 +190,28 @@ input:focus, textarea:focus {
 .poster-card-content h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.2rem;
+}
+
+/* masonry testing stuff */
+
+
+.poster-masonry {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 50px;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.poster-masonry-column {
+  flex: 1;             
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 250px; /* change to normal width for fixed col sizes?? or do min/max width idk*/
+  
 }
 
 /* Empty State */

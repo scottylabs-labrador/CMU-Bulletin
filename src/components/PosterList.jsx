@@ -9,6 +9,11 @@ import { collection, query, onSnapshot, orderBy, doc, setDoc, deleteDoc, getDoc 
 // Import the modal component for poster details
 import Modal from './Modal';
 
+// Import Masonry for column layout
+// npm install react-masonry-css
+// if stuff breaks bc not installed
+import Masonry from "react-masonry-css";
+
 /*================================================================================
 Helper Function #1: Check if a recurring event occurs on a given date
 ================================================================================*/
@@ -169,6 +174,15 @@ const createGoogleCalendarLink = (poster) => {
   if (location) params.set('location', location);
 
   return `https://www.google.com/calendar/render?${params.toString()}`;
+};
+
+
+// masonry testing stuff!
+const breakpointColumnsObj = {
+  default: 4,
+  1200: 3,
+  800: 2,
+  500: 1
 };
 
 /**********************************************************************************/
@@ -373,11 +387,21 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
             <p>Be the first to share something!</p>
           </div>
         ) : (
-          filteredPosters.map((poster) => (
-            <div key={poster.id} className="poster-card">
-              <img src={poster.image_url} alt={poster.title} onClick={() => handlePosterClick(poster)} />
-            </div>
-          ))
+          <Masonry
+            breakpointCols={breakpointColumnsObj}
+            className="poster-masonry"
+            columnClassName="poster-masonry-column"
+          >
+            {filteredPosters.map((poster) => (
+              <div key={poster.id} className="poster-card">
+                <img
+                  src={poster.image_url}
+                  alt={poster.title}
+                  onClick={() => handlePosterClick(poster)}
+                />
+              </div>
+            ))}
+          </Masonry>
         )}
       </div>
     ) : (
