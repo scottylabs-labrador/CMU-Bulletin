@@ -15,7 +15,10 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
     setSearchQuery(e.target.value);
   };
 
-  const categories = ['All', 'career', 'club', 'performance', 'sports', 'wellness']; // Hardcoded sorted
+  // const categories = ['All', 'career', 'club', 'social', 'performance', 'sports', 'academic', 'wellness']; // Hardcoded sorted
+  const categories = ['All', 'career', 'club', 'performance', 'sport', 'social', 'academic']; // shortened list for testing
+
+
   const availableLocations = [
     'University Center',
     'Hunt Library',
@@ -37,7 +40,7 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
     <header>
       <div className="top-bar">
         <div className = "title-logo"> 
-          <img src = "./logo-small.png"></img>
+          <img src = "./logo-small.svg"></img>
           <h1 class="website-title">
             <Link to="/">CMU <br/>Bulletin</Link>
           </h1>
@@ -46,7 +49,7 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
         <div className = "search-bar">
           <img src="./search-icon.svg" alt="Search" className="search-icon" />
           
-          
+
           <input
             type="text"
             placeholder="Search for events, information..."
@@ -70,14 +73,41 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
 
       {!isProfilePage && !isAuthPage && (
         <div className="category-bar">
+          {/* <div class="event-category">
+            <a href="#">
+              <img src="./all-icon.svg" />
+              <p>Hello World</p>
+            </a>
+          </div> */}
+          
           {categories.map(cat => (
-            <Link 
-              key={cat} 
-              to={cat === 'All' ? '/' : `/${cat}`}
-              className={activeCategory === cat ? 'active' : ''}
-            >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </Link>
+
+            
+            <div className="event-category">
+              {/* <a href="/sports">
+                <img src="./all-icon.svg" />
+                <p>Hello World</p>
+              </a> */}
+              {/* testing code, not sure if should use <a> instead of Link */}
+
+              <Link 
+                key={cat} 
+                to={cat === 'All' ? '/' : `/${cat}`}
+                className={activeCategory === cat ? 'active' : ''}
+              >
+                <div className="icon-wrap">
+                  <img
+                    src={`/${cat.toLowerCase()}.svg`}
+                    alt={`${cat.toLowerCase()} icon`}
+                  />
+
+                </div>
+                
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </Link>
+            </div>
+
+            
           ))}
         </div>
       )}

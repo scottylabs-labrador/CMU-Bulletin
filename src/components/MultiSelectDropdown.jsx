@@ -32,7 +32,7 @@ function MultiSelectDropdown({ label, options, selectedOptions, onChange }) {
   return (
     <div className="multi-select-dropdown" ref={dropdownRef}>
       <button type="button" className="dropdown-toggle" onClick={handleToggle}>
-        {label}: {selectedOptions.length > 0 ? `${selectedOptions.length} Selected` : 'None Selected'}
+        {label}: {selectedOptions.length > 0 ? `${selectedOptions.length} Selected` : ''}
       </button>
       {isOpen && (
         <div className="dropdown-menu">
