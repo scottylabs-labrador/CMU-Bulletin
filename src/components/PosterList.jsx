@@ -419,7 +419,7 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
                 <div className="poster-details">
                   <h3>{poster.title}</h3>
                   <p>{poster.description}</p>
-                  Location: {poster.location.join(', ')} 
+                  Location editing for list view: {poster.location.join(', ')} 
                   
                 </div>
               </div>

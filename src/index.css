@@ -410,6 +410,23 @@ input:focus, textarea:focus {
     padding: 1rem; /* Adjust padding */
   }
 
+  .modal-icon, .modal-info {
+    
+      display: flex;
+      align-items: center; /* to align icon and text vertically */
+    
+  }
+
+  .align-icon{
+    display: flex;
+    align-items: flex-end;
+}
+
+.align-icon img {
+  width: 10px;
+    height: 40px;
+}
+
   .poster-grid {
     grid-template-columns: repeat(2, 1fr); /* 2 columns for mobile */
   }
