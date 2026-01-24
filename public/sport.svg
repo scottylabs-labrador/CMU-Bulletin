@@ -1,0 +1,24 @@
+<svg width="35" height="43" viewBox="0 0 35 43" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="path-1-inside-1_860_7641" fill="white">
+<rect x="21.7646" y="26.0786" width="4.09523" height="17.2" rx="1.63809" transform="rotate(-27 21.7646 26.0786)"/>
+</mask>
+<rect x="21.7646" y="26.0786" width="4.09523" height="17.2" rx="1.63809" transform="rotate(-27 21.7646 26.0786)" fill="black" stroke="#1E1E1E" stroke-width="4.09523" mask="url(#path-1-inside-1_860_7641)"/>
+<ellipse cx="20.2764" cy="15.2755" rx="9.53499" ry="12.2857" transform="rotate(-27 20.2764 15.2755)" fill="#727272"/>
+<path d="M28.5997 11.5654C29.7366 13.7967 30.3026 16.2518 30.2218 18.6018C30.141 20.9517 29.4173 23.0844 28.1477 24.714C26.8781 26.3436 25.1231 27.3923 23.118 27.7197C21.1129 28.047 18.9533 27.6374 16.9285 26.5457" stroke="#1E1E1E" stroke-width="2.8" stroke-linecap="round"/>
+<circle cx="12.5" cy="30.5" r="12.5" fill="#B3B3B3"/>
+<mask id="mask0_860_7641" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="18" width="25" height="25">
+<circle cx="12.5" cy="30.5" r="12.5" fill="#B3B3B3"/>
+</mask>
+<g mask="url(#mask0_860_7641)">
+<path d="M12.6748 43L12.6748 18" stroke="#888888" stroke-width="2.8" stroke-linecap="round"/>
+<path d="M2.91406 39.981C2.91406 39.981 5.78072 34.2045 5.78072 30.3768C5.78072 26.5491 2.91406 21.2763 2.91406 21.2763" stroke="#888888" stroke-width="2.8" stroke-linecap="round"/>
+<path d="M20.9027 39.7046C20.9027 39.7046 18.6094 34.6138 18.6094 30.7861C18.6094 26.9584 21.4761 21.6856 21.4761 21.6856" stroke="#888888" stroke-width="2.8" stroke-linecap="round"/>
+<path d="M-1 29.9824H25.5" stroke="#888888" stroke-width="2.8" stroke-linecap="round"/>
+</g>
+<path d="M19.9086 12.6741C20.4013 13.8349 19.4527 15.0937 18.2011 14.9401L6.48969 13.5021C5.23808 13.3484 4.62219 11.8975 5.38108 10.8904L12.4821 1.46696C13.241 0.459882 14.8055 0.651978 15.2982 1.81274L19.9086 12.6741Z" fill="white"/>
+<path d="M20.9194 13.3582C21.661 13.9171 21.8092 14.9713 21.2503 15.713C20.6914 16.4546 19.6372 16.6028 18.8955 16.0439L18.4479 15.7066L20.4717 13.0209L20.9194 13.3582Z" fill="white"/>
+<rect x="21.3696" y="12.1284" width="5.60476" height="2.2419" rx="1.12095" transform="rotate(127 21.3696 12.1284)" fill="#1E1E1E"/>
+<path d="M6.21094 11.4668L10.6947 12.0273" stroke="#B3B3B3" stroke-width="2.8" stroke-linecap="round"/>
+<path d="M7.81055 5.7334L11.6103 8.30937" stroke="#B3B3B3" stroke-width="2.8" stroke-linecap="round"/>
+<path d="M13.376 2.45752L15.2522 6.38085" stroke="#B3B3B3" stroke-width="2.8" stroke-linecap="round"/>
+</svg>
