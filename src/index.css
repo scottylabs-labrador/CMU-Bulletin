@@ -59,13 +59,48 @@ header {
   padding: 1rem 2rem;
   border-bottom: 1px solid var(--border-color);
 }
-.website-title { 
+
+.logo-button-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  text-decoration: none !important; 
   margin-left: 5px; 
   margin-top: 0; 
   padding: 10px;
-  font-weight: normal;
+  color: inherit; 
+  
+  background: transparent;
 }
 
+.logo-button-link:hover, 
+.logo-button-link:active,
+.logo-button-link:focus {
+  text-decoration: none !important; /* Forces the underline to stay hidden */
+  outline: none;
+}
+
+.website-title {
+  /* Use your variable here! */
+  color: var(--primary-color, #c41230); 
+  
+  font-weight: 700;
+  margin: 10px;
+  line-height: 1.1; /* Keeps the "CMU Bulletin" stack tight */
+}
+
+/* If the "CMU" part is in a Link, we need to be very specific */
+.logo-button-link .website-title a {
+    color: var(--primary-color) !important;
+}
+
+.logo-button-link img {
+  /* This ensures the image doesn't block the click from reaching the link */
+  pointer-events: auto; 
+  display: block;
+  cursor: pointer;
+}
 
 .title-logo {
   display: flex;
@@ -173,6 +208,7 @@ button, .btn {
   border-radius: 40px;
   text-decoration: none;
 }
+
 
 .clearbtn:hover , .createbtn:hover{
   color: var(--Foreground-brandNeutral-Primary, #4A5662);

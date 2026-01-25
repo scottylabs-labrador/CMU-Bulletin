@@ -42,12 +42,14 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
   return (
     <header>
       <div className="top-bar">
-        <div className = "title-logo"> 
-          <img src = "./logo-small.svg"></img>
-          <h1 class="website-title">
-            <Link to="/">CMU <br/>Bulletin</Link>
-          </h1>
-        </div>
+        <div className="title-logo"> 
+          <Link to="/" className="logo-button-link">
+            <img src="./logo-small.svg" alt="CMU Logo" />
+            <h1 className="website-title">
+              CMU <br/> Bulletin
+            </h1>
+          </Link>
+  </div>
 
         <div className = "search-bar">
           <img src="./search-icon.svg" alt="Search" className="search-icon" />
