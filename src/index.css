@@ -69,7 +69,7 @@ header {
   margin-left: 5px; 
   margin-top: 0; 
   padding: 10px;
-  color: inherit; 
+  color: #2C1B54; 
   
   background: transparent;
 }
@@ -83,7 +83,7 @@ header {
 
 .website-title {
   /* Use your variable here! */
-  color: var(--primary-color, #c41230); 
+  color: #2C1B54; 
   
   font-weight: 700;
   margin: 10px;
