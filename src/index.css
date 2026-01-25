@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
 :root {
-  --primary-color: #c41230; /* CMU Red */
+  --primary-color:  #c41230; /* CMU Red */
   --secondary-color: #f8f9fa; /* Light Gray */
   --text-color: #212529; /* Dark Gray */
   --background-color: #fff;
@@ -41,6 +41,17 @@ header {
   z-index: 1001;
 }
 
+/* Satoshi Regular */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/WEB/fonts/Satoshi-Bold.woff2') format('woff2'),
+       url('/WEB/fonts/Satoshi-Bold.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  line-height: normal;
+}
+
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -54,6 +65,7 @@ header {
   padding: 10px;
   font-weight: normal;
 }
+
 
 .title-logo {
   display: flex;
@@ -111,16 +123,62 @@ a:hover {
   align-items: center; /* Vertically align items in the filter bar */
 }
 
+/*Nav Bar Items*/
+
+.nav-buttons-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+}
+
 /* Buttons */
 button, .btn {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: transparent; 
+  color: black;
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.3s, box-shadow 0.3s;
   font-weight: 600;
+}
+
+.clearbtn{
+  --size: 45px;
+  
+  display: flex;
+  width: var(--size);
+  height: var(--size);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1/1;
+  background: transparent;
+  padding: 0;
+}
+
+.createbtn{
+  color: var(--Foreground-brandNeutral-Primary, #4A5662);
+  display: flex;  
+  height: 40px;
+  padding: 10px 18px;
+  align-items: center;
+  gap: 8px; 
+
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 500;
+
+  border: 1.6px solid var(--Stroke-Neutral-1, #D6D6D6);
+  border-radius: 40px;
+  text-decoration: none;
+}
+
+.clearbtn:hover , .createbtn:hover{
+  color: var(--Foreground-brandNeutral-Primary, #4A5662);
+  background-color: #E6E6E6; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  text-decoration: none !important;
 }
 
 button:hover, .btn:hover {
@@ -166,19 +224,37 @@ button:hover, .btn:hover {
 /* Search Bar Styling */
 
 .search-bar {
+  position: relative;
   display: flex;
-  justify-content: center;
+  align-items: center;
   width: 100%; 
   max-width: 600px;
-  margin: 0 auto; 
+  margin: 0 auto;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  width: 18px;
+  height: 18px;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .search-bar input {
   width: 100%; 
-  max-width: 100%; 
-  padding: 10px 15px; 
+  max-width: 100%;
+  margin: 0;  
+  
+  padding-left: 40px !important; 
+  padding-top: 12px;
+  padding-bottom: 12px;
+  padding-right: 15px;
+
   font-size: 16px; 
-  margin-left: 20px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  outline: none;
   /* border-radius: 20px; */
 }
 
