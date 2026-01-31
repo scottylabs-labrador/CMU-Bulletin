@@ -31,6 +31,45 @@ header {
   z-index: 1001;
 }
 
+/* New Logo */ 
+
+/* Brand container */
+.brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Logo */
+.brand-logo {
+  height: 40px;
+  width: auto;
+}
+
+/* Text container */
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+/* Top line */
+.brand-line1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* Bottom line */
+.brand-line2 {
+  font-size: 26px;
+  font-weight: 700;
+}
+
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -39,11 +78,11 @@ header {
   border-bottom: 1px solid var(--border-color);
 }
 
-.top-bar h1 {
+/* .top-bar h1 {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-}
+} */
 
 a {
   color: var(--primary-color); /* CMU Red for all links */

@@ -36,7 +36,16 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
   return (
     <header>
       <div className="top-bar">
-        <h1><Link to="/">CMU Bulletin</Link></h1>
+
+        {/* New Logo in NavBar */}
+        <Link to="/" className="brand">
+          <img src="/bulletin-logo.png" alt="CMU Bulletin logo" className="brand-logo"/>
+          <div className="brand-text">
+              <span className="brand-line1">CMU</span>
+              <span className="brand-line1">Bulletin</span>
+          </div>
+        </Link>
+
         <div>
           {user ? (
             <>

@@ -18,3 +18,7 @@ Your one-stop shop for everything happening at Carnegie Mellon. Never miss an ev
 - **Frontend:** React & Vite
 - **Backend & Hosting:** Firebase (Auth, Firestore, Storage, Hosting)
 - **Styling:** Pure CSS
+
+### Running CMU Bulletin Locally
+
+
