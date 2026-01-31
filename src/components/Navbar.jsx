@@ -11,7 +11,7 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
   const toggleDropdown = () => setIsOpen(!isOpen);  
 
   const isProfilePage = location.pathname === '/profile';
-  const isAuthPage = location.pathname === '/auth';
+  const isAuthPage = location.pathname === '/authsignup';
 
   const handleSearchChange = (e) => {
     setSearchInput(e.target.value);
@@ -48,8 +48,8 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
             <h1 className="website-title">
               CMU <br/> Bulletin
             </h1>
-          </Link>
-  </div>
+        </Link>
+</div>
 
         <div className = "search-bar">
           <img src="./search-icon.svg" alt="Search" className="search-icon" />
@@ -97,7 +97,15 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
               DROPDOWN SECTION END */}
             </>
           ) : (
-            <Link to="/auth" className="btn">Sign In</Link>
+            <>
+            <Link to="/AuthLogin" className="clearbtn">
+              <span>Log In</span>
+            </Link>
+            
+            <Link to="/AuthSignUp" className="blackbtn">
+            <span>Sign Up</span>
+            </Link>
+            </>
           )}
         </div>
       </div>
