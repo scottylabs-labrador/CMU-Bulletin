@@ -189,7 +189,7 @@ button, .btn {
   font-weight: 600;
 }
 
-.clearbtn{
+.clearloginbtn{
   --size: 45px;
   
   color: black;
@@ -210,6 +210,30 @@ button, .btn {
   aspect-ratio: 1/1;
   background: transparent;
   white-space: nowrap;
+  text-decoration: none !important;
+}
+
+.clearbtn {
+  --size: 45px;
+  --padding: 1.2 rem;
+  
+  color: black;
+  
+  border: none;
+  padding: var(--padding) var(--padding);
+  border-radius: 25px;
+  cursor: pointer;
+  /*transition: background-color 0.3s, box-shadow 0.3s;*/
+
+  display: flex;
+  height: var(--size);
+  width: var(--size);
+  padding: 0px;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  aspect-ratio: 1/1;
+  background: transparent;
 }
 
 .blackbtn{
@@ -224,7 +248,6 @@ button, .btn {
   --size: 45px;
   display: flex;
   height: 40px;
-  padding: 9px 16px;
   justify-content: center;
   align-items: center;
   gap: 20px;
@@ -248,7 +271,7 @@ button, .btn {
   text-decoration: none;
 }
 
-.clearbtn:hover , .createbtn:hover, .blackbtn:hover{
+.clearbtn:hover , .createbtn:hover, .blackbtn:hover, .clearloginbtn:hover{
   color: var(--Foreground-brandNeutral-Primary, #4A5662);
   background-color: #E6E6E6; 
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -273,7 +296,7 @@ button:hover, .btn:hover {
 }
 
 .event-category {
-  font-family: 'Satoshi', bold;
+  font-family: 'Satoshi-Bold', bold;
   font-size: 14px;
   display: flex;
   justify-content: center; 

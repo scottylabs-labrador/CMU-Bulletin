@@ -62,7 +62,7 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
           />
         </div> 
         
-        
+
         <div className="nav-buttons-container">
           {user ? (
             <>
@@ -79,7 +79,7 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
                 <img src="/bell-icon.svg" alt="bell icon" />
               </button>
 
-              <Link to="/profile" className="clearbtn">
+              <Link to="/profile" className="clearbtn" style={{'--size':'50px','padding--':'2 rem'}}>
                 <img src="/tester-pfp-icon.svg" alt="Profile Picture" />
               </Link>
               
@@ -98,7 +98,7 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
             </>
           ) : (
             <>
-            <Link to="/AuthLogin" className="clearbtn">
+            <Link to="/AuthLogin" className="clearloginbtn">
               <span>Log In</span>
             </Link>
             
