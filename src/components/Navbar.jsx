@@ -155,24 +155,27 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
         <div className="filter-bar">
           <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
           <MultiSelectDropdown
-            label="Location"
+            label={
+              <>
+                <img src="./location-icon.svg" alt="Location" />
+                Location
+              </>
+            }
             options={availableLocations}
             selectedOptions={filterLocations}
             onChange={setFilterLocations}
           />
           <MultiSelectDropdown
-            label="Tags"
+            label={
+              <>
+                <img src="./tag-icon.svg" alt="Tags" />
+                Tags
+              </>
+            }
             options={availableTags}
             selectedOptions={filterTags}
             onChange={setFilterTags}
           />
-          {/* <input
-            type="text"
-            placeholder="Search"
-            value={searchInput}
-            onChange={handleSearchChange}
-          /> */}
-          
           <button onClick={toggleViewMode}>
             {toggleViewMode ? 'List' : 'Grid'} View
           </button>
