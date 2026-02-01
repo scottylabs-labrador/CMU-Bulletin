@@ -103,6 +103,39 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
       </div>
 
       {!isProfilePage && !isAuthPage && (
+        <div className="filter-bar">
+          <div className="navbar-flavor-text">Discover what’s going on!</div>
+          <input className="choose-date" type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
+          <MultiSelectDropdown
+            label={
+              <>
+                <img src="./location-icon.svg" alt="Location" />
+                Location
+              </>
+            }
+            options={availableLocations}
+            selectedOptions={filterLocations}
+            onChange={setFilterLocations}
+          />
+          <MultiSelectDropdown
+            label={
+              <>
+                <img src="./tag-icon.svg" alt="Tags" />
+                Tags
+              </>
+            }
+            options={availableTags}
+            selectedOptions={filterTags}
+            onChange={setFilterTags}
+          />
+          <button onClick={toggleViewMode}>
+            {toggleViewMode ? 'List' : 'Grid'} View
+          </button>
+
+        </div>
+      )}
+
+      {!isProfilePage && !isAuthPage && (
         <div className="category-bar">
           {/* <div class="event-category">
             <a href="#">
@@ -143,37 +176,7 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
         </div>
       )}
 
-      {!isProfilePage && !isAuthPage && (
-        <div className="filter-bar">
-          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
-          <MultiSelectDropdown
-            label={
-              <>
-                <img src="./location-icon.svg" alt="Location" />
-                Location
-              </>
-            }
-            options={availableLocations}
-            selectedOptions={filterLocations}
-            onChange={setFilterLocations}
-          />
-          <MultiSelectDropdown
-            label={
-              <>
-                <img src="./tag-icon.svg" alt="Tags" />
-                Tags
-              </>
-            }
-            options={availableTags}
-            selectedOptions={filterTags}
-            onChange={setFilterTags}
-          />
-          <button onClick={toggleViewMode}>
-            {toggleViewMode ? 'List' : 'Grid'} View
-          </button>
-
-        </div>
-      )}
+      
     </header>
   );
 }
