@@ -7,7 +7,8 @@ import UserProfile from './components/UserProfile';
 import EditPoster from './components/EditPoster';
 import { auth, db } from './firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
-import Auth from './components/Auth';
+import AuthSignUp from './components/AuthSignUp';
+import AuthLogin from './components/AuthLogin';
 import Footer from './components/Footer';
 
 function App() {
@@ -86,7 +87,8 @@ function App() {
           <Route path="/" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} />
           <Route path="/:category" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} />
           <Route path="/post" element={<PosterUpload user={user} />} />
-          <Route path="/auth" element={<Auth />} />
+          <Route path="/authsignup" element={<AuthSignUp />} />
+          <Route path="/authlogin" element={<AuthLogin />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/edit-poster/:id" element={<EditPoster />} />
         </Routes>

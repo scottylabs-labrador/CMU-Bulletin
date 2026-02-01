@@ -1,5 +1,6 @@
 /* src/index.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import "/WEB/css/satoshi.css";
 
 :root {
   --primary-color:  #c41230; /* CMU Red */
@@ -23,7 +24,7 @@
 
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Satoshi-Bold', sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
   margin: 0;
@@ -41,14 +42,12 @@ header {
   z-index: 1001;
 }
 
-/* Satoshi Regular */
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/WEB/fonts/Satoshi-Bold.woff2') format('woff2'),
-       url('/WEB/fonts/Satoshi-Bold.woff') format('woff');
-  font-weight: 400;
+.text {
+  color: #4C4C4C;
+  font-family: 'Satoshi-Regular';
+  font-size: 16px;
   font-style: normal;
-  font-display: swap;
+  font-weight: 500;
   line-height: normal;
 }
 
@@ -87,16 +86,14 @@ header {
   
   font-weight: 700;
   margin: 10px;
-  line-height: 1.1; /* Keeps the "CMU Bulletin" stack tight */
+  line-height: 1.1;
 }
 
-/* If the "CMU" part is in a Link, we need to be very specific */
 .logo-button-link .website-title a {
     color: var(--primary-color) !important;
 }
 
 .logo-button-link img {
-  /* This ensures the image doesn't block the click from reaching the link */
   pointer-events: auto; 
   display: block;
   cursor: pointer;
@@ -202,18 +199,70 @@ button, .btn {
   font-weight: 600;
 }
 
-.clearbtn{
+.clearloginbtn{
   --size: 45px;
   
+  color: black;
+  
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+
+  --size: 45px;
   display: flex;
-  width: var(--size);
-  height: var(--size);
+  height: 40px;
+  padding: 9px 16px;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
   aspect-ratio: 1/1;
   background: transparent;
-  padding: 0;
+  white-space: nowrap;
+  text-decoration: none !important;
+}
+
+.clearbtn {
+  --size: 45px;
+  --padding: 1.2 rem;
+  
+  color: black;
+  
+  border: none;
+  padding: var(--padding) var(--padding);
+  border-radius: 25px;
+  cursor: pointer;
+  /*transition: background-color 0.3s, box-shadow 0.3s;*/
+
+  display: flex;
+  height: var(--size);
+  width: var(--size);
+  padding: 0px;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  aspect-ratio: 1/1;
+  background: transparent;
+}
+
+.blackbtn{
+  background: black;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  
+  --size: 45px;
+  display: flex;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  aspect-ratio: 1/1;
+  white-space: nowrap;
 }
 
 .createbtn{
@@ -224,7 +273,7 @@ button, .btn {
   align-items: center;
   gap: 8px; 
 
-  font-family: 'Satoshi', sans-serif;
+  font-family: 'Satoshi-Bold', sans-serif;
   font-weight: 500;
 
   border: 1.6px solid var(--Stroke-Neutral-1, #D6D6D6);
@@ -232,8 +281,7 @@ button, .btn {
   text-decoration: none;
 }
 
-
-.clearbtn:hover , .createbtn:hover{
+.clearbtn:hover , .createbtn:hover, .blackbtn:hover, .clearloginbtn:hover{
   color: var(--Foreground-brandNeutral-Primary, #4A5662);
   background-color: #E6E6E6; 
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -258,7 +306,7 @@ button:hover, .btn:hover {
 }
 
 .event-category {
-  font-family: 'Satoshi', bold;
+  font-family: 'Satoshi-Bold', bold;
   font-size: 14px;
   display: flex;
   justify-content: center; 
@@ -300,6 +348,7 @@ button:hover, .btn:hover {
   width: 100%; 
   max-width: 600px;
   margin: 0 auto;
+  font: 'Satoshi-Regular';
 }
 
 .search-icon {
@@ -321,7 +370,13 @@ button:hover, .btn:hover {
   padding-bottom: 12px;
   padding-right: 15px;
 
-  font-size: 16px; 
+  color: #7B7B7B;
+  font-family: 'Satoshi-Regular';
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+
   border: 1px solid #ccc;
   border-radius: 20px;
   outline: none;

@@ -8,7 +8,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
-function Auth() {
+function AuthSignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -138,4 +138,4 @@ function Auth() {
   );
 }
 
-export default Auth;
+export default AuthSignUp;
