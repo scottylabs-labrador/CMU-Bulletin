@@ -40,7 +40,26 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
             {!poster.repeating && poster.single_event_date && (
               <p><strong>Date:</strong> {poster.single_event_date}</p>
             )}
-            <p><strong>Location:</strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</p>
+
+            <div>
+              <div className="modal-icon">
+                <img src='\location-icon.svg'></img>
+                <p><strong>Location:</strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</p>
+              </div>
+
+              
+
+            </div>
+
+            <div className="align-icon">
+              
+              <img src='\location-icon.svg'></img>
+              <span><strong>Location:</strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</span>
+
+            </div>
+
+            
+            
             <p><strong>Category:</strong> {Array.isArray(poster.category) ? poster.category.join(', ') : poster.category}</p>
             {poster.tags && poster.tags.length > 0 && (
               <p><strong>Tags:</strong> {poster.tags.join(', ')}</p>

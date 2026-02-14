@@ -19,6 +19,13 @@ function App() {
   const [availableTags, setAvailableTags] = useState([]);
   const location = useLocation();
 
+  const [viewMode, setViewMode] = useState('grid');  // Default to 'grid'
+  
+  // Function to toggle view mode
+  const toggleViewMode = () => {
+    setViewMode(viewMode === 'grid' ? 'list' : 'grid');
+  };
+
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
@@ -72,11 +79,12 @@ function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         availableTags={availableTags}
+        toggleViewMode={toggleViewMode}
       />
-      <main className="container" style={{ paddingTop: isProfilePage ? '0' : '30px' }}>
+      <main className="container" style={{ paddingTop: isProfilePage ? '0' : '70px' }}>
         <Routes>
-          <Route path="/" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} />} />
-          <Route path="/:category" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} />} />
+          <Route path="/" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} />
+          <Route path="/:category" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} />
           <Route path="/post" element={<PosterUpload user={user} />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<UserProfile />} />

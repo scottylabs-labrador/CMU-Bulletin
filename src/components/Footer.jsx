@@ -5,7 +5,8 @@ function Footer() {
   return (
     <footer className="text-muted">
       <div className="container-fluid text-center">
-        <p>CMU Bulletin @ Scottylabs, 2025</p>
+        
+        <p>CMU Bulletin @ Scotty Labs, 2026</p>
       </div>
     </footer>
   );

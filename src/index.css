@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
 :root {
-  --primary-color: #c41230; /* CMU Red */
+  --primary-color:  #c41230; /* CMU Red */
   --secondary-color: #f8f9fa; /* Light Gray */
   --text-color: #212529; /* Dark Gray */
   --background-color: #fff;
@@ -31,43 +31,15 @@ header {
   z-index: 1001;
 }
 
-/* New Logo */ 
-
-/* Brand container */
-.brand {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-
-  text-decoration: none;
-  color: inherit;
-}
-
-/* Logo */
-.brand-logo {
-  height: 40px;
-  width: auto;
-}
-
-/* Text container */
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-
-/* Top line */
-.brand-line1 {
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-}
-
-/* Bottom line */
-.brand-line2 {
-  font-size: 26px;
-  font-weight: 700;
+/* Satoshi Regular */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/WEB/fonts/Satoshi-Bold.woff2') format('woff2'),
+       url('/WEB/fonts/Satoshi-Bold.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  line-height: normal;
 }
 
 .top-bar {
@@ -78,11 +50,57 @@ header {
   border-bottom: 1px solid var(--border-color);
 }
 
-/* .top-bar h1 {
+.logo-button-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  text-decoration: none !important; 
+  margin-left: 5px; 
+  margin-top: 0; 
+  padding: 10px;
+  color: #2C1B54; 
+  
+  background: transparent;
+}
+
+.logo-button-link:hover, 
+.logo-button-link:active,
+.logo-button-link:focus {
+  text-decoration: none !important; /* Forces the underline to stay hidden */
+  outline: none;
+}
+
+.website-title {
+  /* Use your variable here! */
+  color: #2C1B54; 
+  
+  font-weight: 700;
+  margin: 10px;
+  line-height: 1.1; /* Keeps the "CMU Bulletin" stack tight */
+}
+
+/* If the "CMU" part is in a Link, we need to be very specific */
+.logo-button-link .website-title a {
+    color: var(--primary-color) !important;
+}
+
+.logo-button-link img {
+  /* This ensures the image doesn't block the click from reaching the link */
+  pointer-events: auto; 
+  display: block;
+  cursor: pointer;
+}
+
+.title-logo {
+  display: flex;
+}
+
+.top-bar h1 {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-} */
+}
 
 a {
   color: var(--primary-color); /* CMU Red for all links */
@@ -122,6 +140,7 @@ a:hover {
   padding: 0.75rem 2rem;
   border-bottom: 1px solid var(--border-color);
   gap: 1rem;
+  text-align: center;
 }
 
 .filter-bar {
@@ -129,16 +148,63 @@ a:hover {
   align-items: center; /* Vertically align items in the filter bar */
 }
 
+/*Nav Bar Items*/
+
+.nav-buttons-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+}
+
 /* Buttons */
 button, .btn {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: transparent; 
+  color: black;
   border: none;
   padding: 0.6rem 1.2rem;
-  border-radius: 5px;
+  border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.3s, box-shadow 0.3s;
   font-weight: 600;
+}
+
+.clearbtn{
+  --size: 45px;
+  
+  display: flex;
+  width: var(--size);
+  height: var(--size);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1/1;
+  background: transparent;
+  padding: 0;
+}
+
+.createbtn{
+  color: var(--Foreground-brandNeutral-Primary, #4A5662);
+  display: flex;  
+  height: 40px;
+  padding: 10px 18px;
+  align-items: center;
+  gap: 8px; 
+
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 500;
+
+  border: 1.6px solid var(--Stroke-Neutral-1, #D6D6D6);
+  border-radius: 40px;
+  text-decoration: none;
+}
+
+
+.clearbtn:hover , .createbtn:hover{
+  color: var(--Foreground-brandNeutral-Primary, #4A5662);
+  background-color: #E6E6E6; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  text-decoration: none !important;
 }
 
 button:hover, .btn:hover {
@@ -150,6 +216,7 @@ button:hover, .btn:hover {
   background-color: transparent;
   color: var(--text-color);
   box-shadow: none;
+  display: block;
 }
 
 .category-bar button.active {
@@ -157,11 +224,78 @@ button:hover, .btn:hover {
   color: var(--primary-color);
 }
 
+.event-category {
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+}
+
+.event-category img {
+  display: flex;
+}
+
+.icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 50px;
+  width: 90px;
+}
+
+/* Search Bar Styling */
+
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%; 
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  width: 18px;
+  height: 18px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.search-bar input {
+  width: 100%; 
+  max-width: 100%;
+  margin: 0;  
+  
+  padding-left: 40px !important; 
+  padding-top: 12px;
+  padding-bottom: 12px;
+  padding-right: 15px;
+
+  font-size: 16px; 
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  outline: none;
+}
+
+@media (min-width: 768px) {
+  .search-bar input {
+    width: 50%; /* Adjust width based on screen size (50% of the container) */
+  }
+}
+
+@media (min-width: 1024px) {
+  .search-bar input {
+    width: 40%; /* Adjust width for even larger screens */
+  }
+}
+
 /* Forms and Inputs */
 input[type="text"], input[type="email"], input[type="password"], input[type="date"], textarea {
   padding: 0.75rem;
   border: 1px solid var(--border-color);
-  border-radius: 5px;
+  border-radius: 15px;
   width: 100%;
   box-sizing: border-box;
   transition: border-color 0.3s, box-shadow 0.3s;
@@ -206,7 +340,7 @@ input:focus, textarea:focus {
 
 .poster-card img {
   width: 100%;
-  height: 200px;
+  height: auto;
   object-fit: cover;
 }
 
@@ -217,6 +351,25 @@ input:focus, textarea:focus {
 .poster-card-content h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.2rem;
+}
+
+/* masonry testing stuff */
+.poster-masonry {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 50px;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.poster-masonry-column {
+  flex: 1;             
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 250px; 
 }
 
 /* Empty State */
@@ -346,6 +499,21 @@ input:focus, textarea:focus {
   .modal-content {
     max-width: 90%; /* Adjust modal width for smaller screens */
     padding: 1rem; /* Adjust padding */
+  }
+
+  .modal-icon, .modal-info {
+      display: flex;
+      align-items: center; /* to align icon and text vertically */
+  }
+
+  .align-icon{
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .align-icon img {
+    width: 10px;
+    height: 40px;
   }
 
   .poster-grid {

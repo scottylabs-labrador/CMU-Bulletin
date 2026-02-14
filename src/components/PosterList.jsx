@@ -9,6 +9,11 @@ import { collection, query, onSnapshot, orderBy, doc, setDoc, deleteDoc, getDoc 
 // Import the modal component for poster details
 import Modal from './Modal';
 
+// Import Masonry for column layout
+// npm install react-masonry-css
+// if stuff breaks bc not installed
+import Masonry from "react-masonry-css";
+
 /*================================================================================
 Helper Function #1: Check if a recurring event occurs on a given date
 ================================================================================*/
@@ -171,13 +176,22 @@ const createGoogleCalendarLink = (poster) => {
   return `https://www.google.com/calendar/render?${params.toString()}`;
 };
 
+
+// masonry testing stuff!
+const breakpointColumnsObj = {
+  default: 4,
+  1200: 3,
+  800: 2,
+  500: 1
+};
+
 /**********************************************************************************/
 
 
 // =====================================================
 // Main Component: PosterList
 // =====================================================
-function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user }) {
+function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user, viewMode }) {
   // Local state variables
   const [allPosters, setAllPosters] = useState([]);         // All posters fetched from DB
   const [filteredPosters, setFilteredPosters] = useState([]); // Posters after applying filters
@@ -363,27 +377,59 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   // JSX Render: Poster Grid
   // --------------------------------------------
   return (
-    <div className="poster-grid">
-      {filteredPosters.length === 0 ? (
-        // Empty state if no posters match filters
-        <div className="empty-state">
-          <h2>No posters yet.</h2>
-          <p>Be the first to share something!</p>
-        </div>
-      ) : (
-        // Render poster cards
-        filteredPosters.map((poster) => (
-          <div key={poster.id} className="poster-card" style={{ position: 'relative' }}>
-            <img
-              src={poster.image_url}
-              alt={poster.title}
-              onClick={() => handlePosterClick(poster)}
-            />
+  <div>
+    {/* Render Posters Based on the Current View Mode */}
+    {viewMode === 'grid' ? ( 
+      <div className="poster-grid">
+        {filteredPosters.length === 0 ? (
+          <div className="empty-state">
+            <h2>No posters yet.</h2>
+            <p>Be the first to share something!</p>
           </div>
-        ))
-      )}
-
-      {/* Conditionally render modal for selected poster */}
+        ) : (
+          <Masonry
+            breakpointCols={breakpointColumnsObj}
+            className="poster-masonry"
+            columnClassName="poster-masonry-column"
+          >
+            {filteredPosters.map((poster) => (
+              <div key={poster.id} className="poster-card">
+                <img
+                  src={poster.image_url}
+                  alt={poster.title}
+                  onClick={() => handlePosterClick(poster)}
+                />
+              </div>
+            ))}
+          </Masonry>
+        )}
+      </div>
+    ) : (
+      <ul className="poster-list">
+        {filteredPosters.length === 0 ? (
+          <div className="empty-state">
+            <h2>No posters yet.</h2>
+            <p>Be the first to share something!</p>
+          </div>
+        ) : (
+          filteredPosters.map((poster) => (
+            <li key={poster.id} className="poster-item" onClick={() => handlePosterClick(poster)}>
+              <div className="poster-item-content">
+                <img src={poster.image_url} width={50} height={50} alt={poster.title} className="poster-thumbnail" />
+                <div className="poster-details">
+                  <h3>{poster.title}</h3>
+                  <p>{poster.description}</p>
+                  Location editing for list view: {poster.location.join(', ')} 
+                  
+                </div>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
+    )}
+    
+    {/* Modal handling */}
       {selectedPoster && (
         <Modal
           poster={selectedPoster}

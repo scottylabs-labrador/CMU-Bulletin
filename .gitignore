@@ -109,7 +109,7 @@ public/build
 
 # Gatsby cache
 .cache/
-public
+#public
 
 # Vite build output
 dist
