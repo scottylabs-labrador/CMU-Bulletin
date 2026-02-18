@@ -420,15 +420,17 @@ input:focus, textarea:focus {
 
 /* Main Container */
 .container {
-  padding: 2rem;
+  padding: 0rem;
 }
 
 /* Poster Grid */
 .poster-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr); /* Default for larger screens: 4 columns */
-  gap: 2rem;
-  padding-top: 50px;
+  display: flex;
+  justify-content: center;
+  /* grid-template-columns: repeat(4, 1fr); Default for larger screens: 4 columns */
+  /* gap: 2rem;
+  padding-top: 50px; */
+  width: 100%;
 }
 
 .poster-card {
@@ -467,7 +469,6 @@ input:focus, textarea:focus {
   display: flex;
   justify-content: center;
   width: 100%;
-  padding-top: 50px;
   gap: 2rem;
   max-width: 1400px;
   margin: 0 auto;
@@ -482,12 +483,54 @@ input:focus, textarea:focus {
   
 }
 
+.poster-list-wrapper {
+   background: linear-gradient(
+    145deg,
+    #f6f8fb 0%,
+    #eef1f5 40%,
+    #e6eaef 100%
+  );
+box-shadow:
+  0 10px 40px rgba(150, 170, 200, 0.15);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(255, 255, 255, 0.8);
+
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+
+  border-radius: 18px;
+  padding: 40px;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  width: 100%;
+  transition: all 0.3s ease;
+
+
+
+  
+  
+}
+
+
+
 /* Empty State */
 .empty-state {
   grid-column: 1 / -1; /* Span across all columns */
   text-align: center;
   padding: 6rem 2rem;
   color: #888;
+}
+
+.main-page{
+  width: 100%;
 }
 
 /* Upload and Auth Forms */

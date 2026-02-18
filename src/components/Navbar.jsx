@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
-import MultiSelectDropdown from './MultiSelectDropdown';
 
-function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocations, setFilterLocations, filterTags, setFilterTags, searchQuery, setSearchQuery, availableTags, toggleViewMode }) {
+function Navbar({ user, setSearchQuery}) {
   const [searchInput, setSearchInput] = useState('');
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -110,79 +109,6 @@ function Navbar({ user, activeCategory, filterDate, setFilterDate, filterLocatio
         </div>
       </div>
 
-      {!isProfilePage && !isAuthPage && (
-        <div className="filter-bar">
-          <div className="navbar-flavor-text">Discover what’s going on!</div>
-          <input className="choose-date" type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
-          <MultiSelectDropdown
-            label={
-              <>
-                <img src="./location-icon.svg" alt="Location" />
-                Location
-              </>
-            }
-            options={availableLocations}
-            selectedOptions={filterLocations}
-            onChange={setFilterLocations}
-          />
-          <MultiSelectDropdown
-            label={
-              <>
-                <img src="./tag-icon.svg" alt="Tags" />
-                Tags
-              </>
-            }
-            options={availableTags}
-            selectedOptions={filterTags}
-            onChange={setFilterTags}
-          />
-          <button onClick={toggleViewMode}>
-            {toggleViewMode ? 'List' : 'Grid'} View
-          </button>
-
-        </div>
-      )}
-
-      {!isProfilePage && !isAuthPage && (
-        <div className="category-bar">
-          {/* <div class="event-category">
-            <a href="#">
-              <img src="./all-icon.svg" />
-              <p>Hello World</p>
-            </a>
-          </div> */}
-          
-          {categories.map(cat => (
-
-            
-            <div className="event-category">
-              {/* <a href="/sports">
-                <img src="./all-icon.svg" />
-                <p>Hello World</p>
-              </a> */}
-              {/* testing code, not sure if should use <a> instead of Link */}
-
-              <Link 
-                key={cat} 
-                to={cat === 'All' ? '/' : `/${cat}`}
-                className={activeCategory === cat ? 'active' : ''}
-              >
-                <div className="icon-wrap">
-                  <img
-                    src={`/${cat.toLowerCase()}.svg`}
-                    alt={`${cat.toLowerCase()} icon`}
-                  />
-
-                </div>
-                
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </Link>
-            </div>
-
-            
-          ))}
-        </div>
-      )}
 
       
     </header>

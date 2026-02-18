@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import PosterUpload from './components/PosterUpload';
 import PosterList from './components/PosterList';
 import UserProfile from './components/UserProfile';
+import MainPage from './components/MainPage';
 import EditPoster from './components/EditPoster';
 import { auth, db } from './firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -70,22 +71,40 @@ function App() {
     <div>
       <Navbar 
         user={user} 
-        activeCategory={activeCategory}
-        filterDate={filterDate}
-        setFilterDate={setFilterDate}
-        filterLocations={filterLocations}
-        setFilterLocations={setFilterLocations}
-        filterTags={filterTags}
-        setFilterTags={setFilterTags}
-        searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        availableTags={availableTags}
-        toggleViewMode={toggleViewMode}
       />
-      <main className="container" style={{ paddingTop: isProfilePage ? '0' : '70px' }}>
+      <main className="container" style={{ paddingTop: isProfilePage ? '0' : '0' }}>
         <Routes>
-          <Route path="/" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} />
-          <Route path="/:category" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} />
+          <Route path="/" element={<MainPage
+                                            user={user}
+                                            activeCategory={activeCategory}
+                                            filterDate={filterDate}
+                                            setFilterDate={setFilterDate}
+                                            filterLocations={filterLocations}
+                                            setFilterLocations={setFilterLocations}
+                                            filterTags={filterTags}
+                                            setFilterTags={setFilterTags}
+                                            searchQuery={searchQuery}
+                                            setSearchQuery={setSearchQuery}
+                                            availableTags={availableTags}
+                                            viewMode={viewMode}
+                                            toggleViewMode={toggleViewMode} />} />
+          {/* <Route path="/" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} /> */}
+          <Route path="/:category" element={<MainPage
+                                            user={user}
+                                            activeCategory={activeCategory}
+                                            filterDate={filterDate}
+                                            setFilterDate={setFilterDate}
+                                            filterLocations={filterLocations}
+                                            setFilterLocations={setFilterLocations}
+                                            filterTags={filterTags}
+                                            setFilterTags={setFilterTags}
+                                            searchQuery={searchQuery}
+                                            setSearchQuery={setSearchQuery}
+                                            availableTags={availableTags}
+                                            viewMode={viewMode}
+                                            toggleViewMode={toggleViewMode} />} />
+          {/* <Route path="/:category" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} /> */}
           <Route path="/post" element={<PosterUpload user={user} />} />
           <Route path="/authsignup" element={<AuthSignUp />} />
           <Route path="/authlogin" element={<AuthLogin />} />
