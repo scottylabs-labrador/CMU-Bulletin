@@ -11,7 +11,10 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent clicks inside from closing modal */}
-        <button className="modal-close-btn" onClick={onClose}>&times;</button>
+        {/* <button className="modal-close-btn" onClick={onClose}>&times;</button> */}
+        <button onClick={onClose} className="modal-close-btn">
+          <img src="\x.svg" alt="close button" />
+        </button>
         {user && (
           <HeartIcon
             filled={likedPosters.includes(poster.id)}
@@ -36,10 +39,23 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
           <div className="modal-details-container">
             <h2>{poster.title}</h2>
             <p><strong>{poster.organizer ? 'Organizer:' : 'Uploaded by:'}</strong> {poster.organizer || uploaderName || 'Unknown'}</p>
-            <p>{poster.description}</p>
             {!poster.repeating && poster.single_event_date && (
-              <p><strong>Date:</strong> {poster.single_event_date}</p>
+              <div className="align-icon">
+              
+              <img src='\time-icon.svg'></img>
+              <span><strong></strong>    {poster.single_event_date}</span>
+              </div>
             )}
+
+            <div className="align-icon">
+              
+              <img src='\location-icon.svg'></img>
+              <span><strong></strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</span>
+
+            </div>
+
+            <p>{poster.description}</p>
+            
 
             <div>
               {/* <div className="modal-icon">
@@ -51,12 +67,7 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
 
             </div>
 
-            <div className="align-icon">
-              
-              <img src='\location-icon.svg'></img>
-              <span><strong>Location:</strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</span>
-
-            </div>
+            
 
             
             
