@@ -427,10 +427,11 @@ input:focus, textarea:focus {
 .poster-grid {
   display: flex;
   justify-content: center;
-  /* grid-template-columns: repeat(4, 1fr); Default for larger screens: 4 columns */
+  /* grid-template-columns: repeat(4, 1fr);  */
+  /* Default for larger screens: 4 columns */
   /* gap: 2rem;
   padding-top: 50px; */
-  width: 100%;
+  width: auto;
 }
 
 .poster-card {
@@ -440,6 +441,8 @@ input:focus, textarea:focus {
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
   cursor: pointer; /* Indicate clickable */
+  width: 100%;
+  
 }
 
 .poster-card:hover {
@@ -447,14 +450,27 @@ input:focus, textarea:focus {
   box-shadow: 0 8px 16px var(--shadow-color);
 }
 
+
+
 .poster-card img {
   width: 100%;
   height: auto;
   object-fit: cover;
 }
 
+.poster-card-content-wrapper{
+  padding-bottom: 1rem;
+}
+
 .poster-card-content {
-  padding: 1rem;
+  padding-top: 1.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .poster-card-content h3 {
@@ -479,7 +495,9 @@ input:focus, textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  min-width: 250px; /* change to normal width for fixed col sizes?? or do min/max width idk*/
+  /* min-width: 250px;  */
+  /* change to normal width for fixed col sizes?? or do min/max width idk*/
+  /* max-width: 300px; */
   
 }
 
@@ -519,7 +537,10 @@ box-shadow:
   
 }
 
-
+.poster-placeholder {
+  height: 1px;
+  visibility: hidden;
+}
 
 /* Empty State */
 .empty-state {

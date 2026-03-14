@@ -42,10 +42,10 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
             )}
 
             <div>
-              <div className="modal-icon">
+              {/* <div className="modal-icon">
                 <img src='\location-icon.svg'></img>
                 <p><strong>Location:</strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</p>
-              </div>
+              </div> */}
 
               
 

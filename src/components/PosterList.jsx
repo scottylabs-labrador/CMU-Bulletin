@@ -185,6 +185,8 @@ const breakpointColumnsObj = {
   500: 1
 };
 
+const placeholders = Array.from({ length: breakpointColumnsObj.default });
+
 /**********************************************************************************/
 
 
@@ -401,6 +403,10 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
                 />
               </div>
             ))}
+
+            {placeholders.map((_, i) => (
+                <div key={`ph-${i}`} className="poster-placeholder"></div>
+              ))}
           </Masonry>
         )}
       </div>

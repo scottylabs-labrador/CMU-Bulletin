@@ -6,6 +6,17 @@ import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import './UserProfile.css'; // Import the new CSS file
 
+import Masonry from "react-masonry-css";
+
+const breakpointColumnsObj = {
+  default: 3,
+  1200: 3,
+  800: 2,
+  500: 1
+};
+
+const placeholders = Array.from({ length: breakpointColumnsObj.default });
+
 function UserProfile() {
   const [userPosts, setUserPosts] = useState([]);
   const [likedPostersData, setLikedPostersData] = useState([]);
@@ -179,7 +190,8 @@ function UserProfile() {
           <p>You haven't posted anything yet.</p>
         ) : (
           <div className="poster-grid">
-            {userPosts.map((poster) => (
+            {/* keeping old code for reference for now */}
+            {/* {userPosts.map((poster) => (
               <div key={poster.id} className="poster-card" onClick={() => handlePosterClick(poster)}>
                 <img src={poster.image_url} alt={poster.title} />
                 <div className="poster-card-content">
@@ -190,8 +202,72 @@ function UserProfile() {
                   <button onClick={(e) => {e.stopPropagation(); handleDeletePost(poster.id)}} className="btn" style={{ marginLeft: '10px', backgroundColor: '#dc3545' }}>Delete</button>
                 </div>
               </div>
-            ))}
+            ))} */}
+
+            <Masonry
+              breakpointCols={breakpointColumnsObj}
+              className="poster-masonry"
+              columnClassName="poster-masonry-column"
+            >
+              {userPosts.map((poster) => (
+                <div
+                  key={poster.id}
+                  className="poster-card"
+                  onClick={() => handlePosterClick(poster)}
+                >
+                  <img src={poster.image_url} alt={poster.title} />
+                  <div className="poster-card-content-wrapper">
+
+                  
+
+                    <div className="poster-card-content">
+                      <h4>{poster.title}</h4>
+
+                      <p>
+                        <strong>{poster.organizer ? "Organizer:" : "Posted by:"}</strong>{" "}
+                        {poster.organizer ||
+                          uploaderNames[poster.uploaded_by] ||
+                          "Unknown"}
+                      </p>
+
+                      <p>{poster.description}</p>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditPost(poster.id);
+                        }}
+                        className="btn"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePost(poster.id);
+                        }}
+                        className="btn"
+                        style={{ marginLeft: "10px", backgroundColor: "#dc3545" }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+                {placeholders.map((_, i) => (
+                    <div key={`ph-${i}`} className="poster-placeholder"></div>
+                  ))} 
+            </Masonry>
+
+
           </div>
+
+
+
+
         )}
 
         <h3>Liked Posters</h3>
@@ -199,7 +275,7 @@ function UserProfile() {
           <p>You haven't liked any posters yet.</p>
         ) : (
           <div className="poster-grid">
-            {likedPostersData.map((poster) => (
+            {/* {likedPostersData.map((poster) => (
               <div key={poster.id} className="poster-card" onClick={() => handlePosterClick(poster)}>
                 <img src={poster.image_url} alt={poster.title} />
                 <div className="poster-card-content">
@@ -208,7 +284,47 @@ function UserProfile() {
                   <p>{poster.description}</p>
                 </div>
               </div>
-            ))}
+            ))} */}
+
+
+            <Masonry
+              breakpointCols={breakpointColumnsObj}
+              className="poster-masonry"
+              columnClassName="poster-masonry-column"
+            >
+              {likedPostersData.map((poster) => (
+                <div
+                  key={poster.id}
+                  className="poster-card"
+                  onClick={() => handlePosterClick(poster)}
+                >
+                  <img src={poster.image_url} alt={poster.title} />
+
+                  <div className="poster-card-content-wrapper">
+
+                  
+                    <div className="poster-card-content">
+                      <h4>{poster.title}</h4>
+
+                      <p>
+                        <strong>{poster.organizer ? "Organizer:" : "Posted by:"}</strong>{" "}
+                        {poster.organizer ||
+                          uploaderNames[poster.uploaded_by] ||
+                          "Unknown"}
+                      </p>
+
+                      <p>{poster.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {placeholders.map((_, i) => (
+                  <div key={`ph-${i}`} className="poster-placeholder"></div>
+                ))}
+
+
+            </Masonry>
           </div>
         )}
       </div>
