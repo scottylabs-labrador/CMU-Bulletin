@@ -54,6 +54,8 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
 
             </div>
 
+            <br/>
+
             <p>{poster.description}</p>
             
 
@@ -62,8 +64,6 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
                 <img src='\location-icon.svg'></img>
                 <p><strong>Location:</strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</p>
               </div> */}
-
-              
 
             </div>
 
@@ -85,16 +85,17 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
 
           {googleCalUrl && (
               <div className="calendar-export-section" style={{ marginTop: '20px', textAlign: 'center' }}>
-                  <h4 style={{ marginBottom: '10px', fontSize: '1rem', fontWeight: 'bold' }}>Add to Calendar</h4>
-                  
+                  {/* <h4 style={{ marginBottom: '10px', fontSize: '1rem', fontWeight: 'bold' }}>Add to Calendar</h4> */}
                   {/* QR Code */}
-                  <QRCodeSVG 
+                  {/* <QRCodeSVG 
                       value={googleCalUrl}
                       size={100}
                       level="L"
-                  />
+                  /> */}
+                  {/* hiding this for now until find way to integrate better visually */}
 
                   {/* Direct Clickable Link */}
+                  
                   <p style={{ marginTop: '10px' }}>
                       <a 
                           href={googleCalUrl} 
@@ -105,6 +106,7 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
                           Click to Add to Google Calendar
                       </a>
                   </p>
+                  
               </div>
             )}
           </div>

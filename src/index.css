@@ -24,7 +24,7 @@
 
 
 body {
-  font-family: 'Satoshi-Bold', sans-serif;
+  font-family: 'Satoshi-Medium', sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
   margin: 0;
@@ -276,9 +276,11 @@ button, .btn {
   font-family: 'Satoshi-Bold', sans-serif;
   font-weight: 500;
 
-  border: 1.6px solid var(--Stroke-Neutral-1, #D6D6D6);
-  border-radius: 40px;
+  border: 1px solid var(--Stroke-Neutral-1, #D6D6D6);
+  border-radius: 25px;
   text-decoration: none;
+
+  
 }
 
 .clearbtn:hover , .createbtn:hover, .blackbtn:hover, .clearloginbtn:hover{
@@ -349,11 +351,12 @@ button:hover, .btn:hover {
   max-width: 600px;
   margin: 0 auto;
   font: 'Satoshi-Regular';
+  padding: 1rem;
 }
 
 .search-icon {
   position: absolute;
-  left: 15px;
+  left: 30px;
   width: 18px;
   height: 18px;
   z-index: 10;
@@ -697,4 +700,8 @@ input:focus, textarea:focus {
   .poster-grid {
     grid-template-columns: repeat(2, 1fr); /* 2 columns for mobile */
   }
+}
+
+.footer {
+  padding-top: 2rem;
 }

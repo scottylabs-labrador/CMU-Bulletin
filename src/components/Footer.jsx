@@ -5,8 +5,12 @@ function Footer() {
   return (
     <footer className="text-muted">
       <div className="container-fluid text-center">
-        <p>CMU Bulletin, 2026</p>
-        <p>made with &lt;3 by ScottyLabs</p>
+        <div className = "footer">
+          <p>CMU Bulletin, 2026</p>
+          <p>made with &lt;3 by ScottyLabs</p>
+
+
+        </div>
         
       </div>
     </footer>

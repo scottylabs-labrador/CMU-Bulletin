@@ -185,7 +185,17 @@ const breakpointColumnsObj = {
   500: 1
 };
 
-const placeholders = Array.from({ length: breakpointColumnsObj.default });
+
+// const placeholders = Array.from({ length: (breakpointColumnsObj.default) });
+
+const getFillerArray = (len) => {
+  
+  if (len < breakpointColumnsObj.default) 
+    return Array.from({ length: (breakpointColumnsObj.default - len) });
+  else 
+    return Array.from({ length: 0 });
+};
+
 
 /**********************************************************************************/
 
@@ -404,9 +414,15 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
               </div>
             ))}
 
-            {placeholders.map((_, i) => (
+            {/* {breakpointColumnsObj.default < 10 && <p>Welcome back!</p>} */}
+            {getFillerArray(filteredPosters.length).map((_, i) => (
                 <div key={`ph-${i}`} className="poster-placeholder"></div>
               ))}
+
+            {/* {placeholders.map((_, i) => (
+                <div key={`ph-${i}`} className="poster-placeholder"></div>
+              ))} */}
+
           </Masonry>
         )}
       </div>
@@ -423,9 +439,30 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
               <div className="poster-item-content">
                 <img src={poster.image_url} width={50} height={50} alt={poster.title} className="poster-thumbnail" />
                 <div className="poster-details">
-                  <h3>{poster.title}</h3>
+                  {/* <h3>{poster.title}</h3>
                   <p>{poster.description}</p>
-                  Location editing for list view: {poster.location.join(', ')} 
+                  Location: {poster.location.join(', ')}  */}
+
+                  <h2>{poster.title}</h2>
+                  <p><strong>{poster.organizer ? 'Organizer:' : 'Uploaded by:'}</strong> {poster.organizer || uploaderName || 'Unknown'}</p>
+                  {!poster.repeating && poster.single_event_date && (
+                    <div className="align-icon">
+                    
+                    <img src='\time-icon.svg'></img>
+                    <span><strong></strong>    {poster.single_event_date}</span>
+                    </div>
+                  )}
+
+                  <div className="align-icon">
+                    
+                    <img src='\location-icon.svg'></img>
+                    <span><strong></strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</span>
+
+                  </div>
+
+                  <br/>
+
+                  <p>{poster.description}</p>
                   
                 </div>
               </div>
