@@ -419,6 +419,8 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
                 <div key={`ph-${i}`} className="poster-placeholder"></div>
               ))}
 
+              {/* this may need to be allPosters.length for all page */}
+
             {/* {placeholders.map((_, i) => (
                 <div key={`ph-${i}`} className="poster-placeholder"></div>
               ))} */}

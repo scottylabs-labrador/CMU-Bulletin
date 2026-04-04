@@ -52,6 +52,7 @@ header {
 }
 
 .top-bar {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -181,10 +182,11 @@ a:hover {
 /*Nav Bar Items*/
 
 .nav-buttons-container {
+  /* width: 200px; */
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 3px;
+  gap: 10px;
 }
 
 /* Buttons */
@@ -213,6 +215,7 @@ button, .btn {
   --size: 45px;
   display: flex;
   height: 40px;
+  width: 100px;
   padding: 9px 16px;
   justify-content: center;
   align-items: center;
@@ -258,6 +261,7 @@ button, .btn {
   --size: 45px;
   display: flex;
   height: 40px;
+  width: 100px;
   justify-content: center;
   align-items: center;
   gap: 20px;
@@ -279,7 +283,6 @@ button, .btn {
   border: 1px solid var(--Stroke-Neutral-1, #D6D6D6);
   border-radius: 25px;
   text-decoration: none;
-
   
 }
 
@@ -291,7 +294,7 @@ button, .btn {
 }
 
 button:hover, .btn:hover {
-  background-color: #a00f28; 
+  background-color: #d77979; 
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
@@ -626,6 +629,14 @@ input:focus, textarea:focus {
 
 .modal-close-btn {
   position: absolute;
+  height: 50px;
+  width: 50px;
+  border-radius: 15px;
+  
+  display: inline-flex;       
+  align-items: center;      
+  justify-content: center; 
+
   top: 10px;
   right: 10px;
   background: none;
@@ -633,6 +644,14 @@ input:focus, textarea:focus {
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--text-color);
+  z-index: 200;  
+}
+
+.modal-close-btn img {
+  width: 30px;
+  height: 30px;
+  pointer-events: none; 
+  
 }
 
 .modal-body {

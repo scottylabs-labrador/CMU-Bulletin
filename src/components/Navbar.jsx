@@ -47,8 +47,8 @@ function Navbar({ user, setSearchQuery}) {
             <h1 className="website-title">
               CMU <br/> Bulletin
             </h1>
-        </Link>
-</div>
+          </Link>
+        </div>
 
         <div className = "search-bar">
           <img src="./search-icon.svg" alt="Search" className="search-icon" />
@@ -97,13 +97,16 @@ function Navbar({ user, setSearchQuery}) {
             </>
           ) : (
             <>
+            
             <Link to="/AuthLogin" className="clearloginbtn">
               <span>Log In</span>
+              {/* <p>Log in</p> */}
             </Link>
             
             <Link to="/AuthSignUp" className="blackbtn">
             <span>Sign Up</span>
             </Link>
+            
             </>
           )}
         </div>

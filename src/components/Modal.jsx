@@ -13,7 +13,7 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
       <div className="modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent clicks inside from closing modal */}
         {/* <button className="modal-close-btn" onClick={onClose}>&times;</button> */}
         <button onClick={onClose} className="modal-close-btn">
-          <img src="\x.svg" alt="close button" />
+          <img src="/x.svg"  alt="close button"  />
         </button>
         {user && (
           <HeartIcon
