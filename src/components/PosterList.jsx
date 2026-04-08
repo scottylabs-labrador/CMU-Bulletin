@@ -414,7 +414,6 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
               </div>
             ))}
 
-            {/* {breakpointColumnsObj.default < 10 && <p>Welcome back!</p>} */}
             {getFillerArray(filteredPosters.length).map((_, i) => (
                 <div key={`ph-${i}`} className="poster-placeholder"></div>
               ))}

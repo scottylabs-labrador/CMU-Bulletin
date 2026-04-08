@@ -1,5 +1,5 @@
 // src/components/PosterUpload.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { db, auth } from '../firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import MultiSelectDropdown from './MultiSelectDropdown';
@@ -12,6 +12,8 @@ function PosterUpload({ user }) {
   const [otherLocation, setOtherLocation] = useState('');
   const [category, setCategory] = useState([]); // Initialize as array for multi-select
   const [image, setImage] = useState(null);
+  const fileInputRef = useRef(null);
+
   const [tags, setTags] = useState('');
   const [repeating, setRepeating] = useState(false);
   const [singleEventDate, setSingleEventDate] = useState('');
@@ -21,6 +23,7 @@ function PosterUpload({ user }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
 
   const availableCategories = ['career', 'club', 'performance', 'sports', 'wellness']; // Hardcoded sorted
   const availableLocations = [
@@ -157,6 +160,8 @@ function PosterUpload({ user }) {
       setLocation('');
       setCategory([]); // Reset to empty array
       setImage(null);
+      fileInputRef.current.value = '';
+      
       setTags('');
       setRepeating(false);
       setSingleEventDate('');
@@ -164,6 +169,7 @@ function PosterUpload({ user }) {
         setFrequency('');
         setDaysOfWeek([]);
         setOtherLocation('');
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -220,7 +226,7 @@ function PosterUpload({ user }) {
         </div>
         <div>
           <label>Image:</label>
-          <input type="file" onChange={handleImageChange} accept="image/*" required />
+          <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" required />
         </div>
         <div>
           <label>Tags (comma-separated):</label>

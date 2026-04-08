@@ -16,21 +16,20 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
           <img src="/x.svg"  alt="close button"  />
         </button>
         {user && (
-          <HeartIcon
-            filled={likedPosters.includes(poster.id)}
-            onClick={() => {
-              console.log('Heart icon clicked for poster:', poster.id);
-              handleLikeToggle(poster.id);
-            }}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '100px',
-              width: '30px',
-              height: '30px',
-              zIndex: 100,
-            }}
-          />
+          <div className="heart-container">
+            <HeartIcon
+              filled={likedPosters.includes(poster.id)}
+              onClick={() => {
+                console.log('Heart icon clicked for poster:', poster.id);
+                handleLikeToggle(poster.id);
+              }}
+              style={{
+                width: '30px',
+                height: '30px',
+                zIndex: 100,
+              }}
+            />
+          </div>
         )}
         <div className="modal-body">
           <div className="modal-image-container">
@@ -46,6 +45,7 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
               <span><strong></strong>    {poster.single_event_date}</span>
               </div>
             )}
+           
 
             <div className="align-icon">
               
@@ -84,7 +84,40 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
             )}
 
           {googleCalUrl && (
-              <div className="calendar-export-section" style={{ marginTop: '20px', textAlign: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                  
+
+                  
+                  <p >
+                      <a 
+                          className="calendar-link"
+                          href={googleCalUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{
+                            display: "inline-block",
+                            backgroundColor: "black",
+                            color: "white",
+                            textDecoration: "none",
+                            padding: "10px 20px",
+                            borderRadius: "20px"
+                          }}
+                          // inline styling unoptimal but temporary fix 
+                          // until figure out how to override the anchor styling
+                         
+                       
+                      >
+                          <div className="align-icon">
+              
+                            <img src='\calendar-icon.svg'></img>
+                            <span><strong></strong> Add to Google Calendar</span>
+
+                          </div>
+                          
+                      </a>
+                  </p>
+
+
                   {/* <h4 style={{ marginBottom: '10px', fontSize: '1rem', fontWeight: 'bold' }}>Add to Calendar</h4> */}
                   {/* QR Code */}
                   {/* <QRCodeSVG 
@@ -95,17 +128,6 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
                   {/* hiding this for now until find way to integrate better visually */}
 
                   {/* Direct Clickable Link */}
-                  
-                  <p style={{ marginTop: '10px' }}>
-                      <a 
-                          href={googleCalUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="calendar-link"
-                      >
-                          Click to Add to Google Calendar
-                      </a>
-                  </p>
                   
               </div>
             )}
