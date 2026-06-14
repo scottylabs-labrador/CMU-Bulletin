@@ -25,7 +25,9 @@ function AuthLogin() {
   return (
     <div className="auth-page">
       <div className="auth-promo-panel">
-        <div className="auth-promo" aria-hidden="true" />
+        <div className="auth-promo" aria-hidden="true">
+          <img src="./auth_graphic.svg" alt="login promo" /> 
+        </div>
         {/* <img src="./auth_graphic.svg" alt="login promo" /> */} 
         {/* fix this so the image is in the rounded container and resizes */}
       </div>
@@ -34,7 +36,7 @@ function AuthLogin() {
         <div className="auth-form-inner">
           <div className="auth-form-header">
             <img src="/logo-small.svg" alt="CMU Bulletin" className="auth-logo" />
-            <h2>Welcome Back</h2>
+            <h2>Welcome back!</h2>
             <p className="auth-subtext">Log in to continue your campus experience</p>
           </div>
 
@@ -43,7 +45,7 @@ function AuthLogin() {
               <label>Email</label>
               <input
                 type="email"
-                placeholder="Email"
+                placeholder="andrew.cmu.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

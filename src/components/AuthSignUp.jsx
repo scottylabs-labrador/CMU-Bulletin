@@ -48,7 +48,7 @@ function AuthSignUp() {
               <label>Name</label>
               <input
                 type="text"
-                placeholder="Your name / Organization name"
+                placeholder="Name / Organization"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
