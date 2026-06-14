@@ -2,6 +2,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import HeartIcon from './HeartIcon';
+import { formatEventDateTime } from '../utils/eventDateTime';
 
 function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploaderName }) {
   if (!poster) return null;
@@ -16,6 +17,16 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
   const formatTagLabel = (tag) =>
     tag.charAt(0).toUpperCase() + tag.slice(1);
 
+  const categoryPills = toTagList(poster.category).map((cat) => ({
+    key: `category-${cat}`,
+    label: formatTagLabel(cat),
+  }));
+  const tagPills = (poster.tags || []).map((tag) => ({
+    key: `tag-${tag}`,
+    label: tag,
+  }));
+  const combinedPills = [...categoryPills, ...tagPills];
+
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent clicks inside from closing modal */}
@@ -23,33 +34,30 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
         <button onClick={onClose} className="modal-close-btn">
           <img src="/x.svg"  alt="close button"  />
         </button>
-        {user && (
-          <div className="heart-container">
-            <HeartIcon
-              filled={likedPosters.includes(poster.id)}
-              onClick={() => {
-                console.log('Heart icon clicked for poster:', poster.id);
-                handleLikeToggle(poster.id);
-              }}
-              style={{
-                width: '30px',
-                height: '30px',
-                zIndex: 100,
-              }}
-            />
-          </div>
-        )}
         <div className="modal-body">
           <div className="modal-image-container">
+            {user && (
+              <button
+                type="button"
+                className="modal-heart-overlay"
+                onClick={() => handleLikeToggle(poster.id)}
+                aria-label={likedPosters.includes(poster.id) ? 'Unlike poster' : 'Like poster'}
+              >
+                <HeartIcon
+                  filled={likedPosters.includes(poster.id)}
+                  style={{ width: '22px', height: '22px', pointerEvents: 'none' }}
+                />
+              </button>
+            )}
             <img src={poster.image_url} alt={poster.title} />
           </div>
           <div className="modal-details-container">
             <h2>{poster.title}</h2>
-            <p><strong>{poster.organizer ? 'Organizer:' : 'Uploaded by:'}</strong> {poster.organizer || uploaderName || 'Unknown'}</p>
+            <p className="modal-organizer">{poster.organizer || uploaderName || 'Unknown'}</p>
             {!poster.repeating && poster.single_event_date && (
               <div className="align-icon modal-meta">
               <img src="/time-icon.svg" alt="" />
-              <span>{poster.single_event_date}</span>
+              <span>{formatEventDateTime(poster.single_event_date, poster.single_event_time, poster.single_event_time_end)}</span>
               </div>
             )}
 
@@ -60,25 +68,12 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
 
             <p className="modal-description">{poster.description}</p>
 
-            {toTagList(poster.category).length > 0 && (
+            {combinedPills.length > 0 && (
               <div className="modal-tags-section">
                 <div className="modal-tag-list">
-                  {toTagList(poster.category).map((cat) => (
-                    <span key={cat} className="modal-tag-pill">
-                      {formatTagLabel(cat)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {poster.tags && poster.tags.length > 0 && (
-              <div className="modal-tags-section">
-                <span className="modal-tags-label">Tags</span>
-                <div className="modal-tag-list">
-                  {poster.tags.map((tag) => (
-                    <span key={tag} className="modal-tag-pill">
-                      {tag}
+                  {combinedPills.map((pill) => (
+                    <span key={pill.key} className="modal-tag-pill">
+                      {pill.label}
                     </span>
                   ))}
                 </div>
@@ -86,7 +81,7 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
             )}
             {poster.repeating && (
               <>
-                <p><strong>Next Occurring:</strong> {poster.next_occurring_date}</p>
+                <p><strong>Next Occurring:</strong> {formatEventDateTime(poster.next_occurring_date, poster.event_time)}</p>
                 <p><strong>Frequency:</strong> {poster.frequency}</p>
                 <p><strong>Days:</strong> {poster.days_of_week.join(', ')}</p>
               </>

@@ -8,11 +8,10 @@ import { collection, query, onSnapshot, orderBy, doc, setDoc, deleteDoc, getDoc 
 
 // Import the modal component for poster details
 import Modal from './Modal';
+import { formatEventDateTime } from '../utils/eventDateTime';
 
 // Import Masonry for column layout
-// npm install react-masonry-css
-// if stuff breaks bc not installed
-import Masonry from "react-masonry-css";
+import PosterMasonry from './PosterMasonry';
 
 /*================================================================================
 Helper Function #1: Check if a recurring event occurs on a given date
@@ -174,27 +173,6 @@ const createGoogleCalendarLink = (poster) => {
   if (location) params.set('location', location);
 
   return `https://www.google.com/calendar/render?${params.toString()}`;
-};
-
-
-// masonry testing stuff!
-const breakpointColumnsObj = {
-  default: 5,
-  1400: 4,
-  1100: 3,
-  768: 2,
-  500: 1,
-};
-
-
-// const placeholders = Array.from({ length: (breakpointColumnsObj.default) });
-
-const getFillerArray = (len) => {
-  
-  if (len < breakpointColumnsObj.default) 
-    return Array.from({ length: (breakpointColumnsObj.default - len) });
-  else 
-    return Array.from({ length: 0 });
 };
 
 
@@ -392,42 +370,29 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   return (
   <div>
     {/* Render Posters Based on the Current View Mode */}
-    {viewMode === 'grid' ? ( 
-      <div className="poster-grid">
-        {filteredPosters.length === 0 ? (
-          <div className="empty-state">
-            <h2>No posters yet.</h2>
-            <p>Be the first to share something!</p>
-          </div>
-        ) : (
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="poster-masonry"
-            columnClassName="poster-masonry-column"
-          >
-            {filteredPosters.map((poster) => (
-              <div key={poster.id} className="poster-card">
-                <img
-                  src={poster.image_url}
-                  alt={poster.title}
-                  onClick={() => handlePosterClick(poster)}
-                />
-              </div>
-            ))}
-
-            {getFillerArray(filteredPosters.length).map((_, i) => (
-                <div key={`ph-${i}`} className="poster-placeholder"></div>
-              ))}
-
-              {/* this may need to be allPosters.length for all page */}
-
-            {/* {placeholders.map((_, i) => (
-                <div key={`ph-${i}`} className="poster-placeholder"></div>
-              ))} */}
-
-          </Masonry>
-        )}
-      </div>
+    {viewMode === 'grid' ? (
+      filteredPosters.length === 0 ? (
+        <div className="empty-state">
+          <h2>No posters yet.</h2>
+          <p>Be the first to share something!</p>
+        </div>
+      ) : (
+        <PosterMasonry
+          posters={filteredPosters}
+          renderPoster={(poster, registerHeight) => (
+            <div key={poster.id} className="poster-card">
+              <img
+                src={poster.image_url}
+                alt={poster.title}
+                onClick={() => handlePosterClick(poster)}
+                onLoad={(e) =>
+                  registerHeight(poster.id, e.target.naturalWidth, e.target.naturalHeight)
+                }
+              />
+            </div>
+          )}
+        />
+      )
     ) : (
       <ul className="poster-list">
         {filteredPosters.length === 0 ? (
@@ -451,7 +416,7 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
                     <div className="align-icon">
                     
                     <img src='\time-icon.svg'></img>
-                    <span><strong></strong>    {poster.single_event_date}</span>
+                    <span>{formatEventDateTime(poster.single_event_date, poster.single_event_time, poster.single_event_time_end)}</span>
                     </div>
                   )}
 

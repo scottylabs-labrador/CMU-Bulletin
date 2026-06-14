@@ -1,6 +1,27 @@
-import React from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MultiSelectDropdown from './MultiSelectDropdown';
+import './PosterFilters.css';
+
+function CategoryScrollArrow({ direction, visible, onClick, label }) {
+  return (
+    <button
+      type="button"
+      className={`category-bar-arrow category-bar-arrow--${direction}${visible ? ' category-bar-arrow--visible' : ''}`}
+      onClick={onClick}
+      aria-label={label}
+      tabIndex={visible ? 0 : -1}
+    >
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        {direction === 'left' ? (
+          <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+        ) : (
+          <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+        )}
+      </svg>
+    </button>
+  );
+}
 
 function PosterFilters({
   filterDate,
@@ -16,15 +37,11 @@ function PosterFilters({
   setSearchQuery,
 }) {
   const navigate = useNavigate();
+  const categoryScrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
 
-  const handleResetFilters = () => {
-    setFilterDate('');
-    setFilterLocations([]);
-    setFilterTags([]);
-    setSearchQuery('');
-    navigate('/');
-  };
-  
   const categories = ['All', 'career', 'club', 'performance', 'sport', 'social', 'academic'];
 
   const availableLocations = [
@@ -44,9 +61,53 @@ function PosterFilters({
     'Other',
   ];
 
+  const updateScrollState = useCallback(() => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+
+    const overflow = el.scrollWidth > el.clientWidth + 1;
+    setHasOverflow(overflow);
+    setCanScrollLeft(el.scrollLeft > 1);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+
+    const el = categoryScrollRef.current;
+    if (!el) return undefined;
+
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(el);
+
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [updateScrollState]);
+
+  const scrollCategories = (direction) => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+
+    const scrollAmount = Math.max(el.clientWidth * 0.6, 160);
+    el.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleResetFilters = () => {
+    setFilterDate('');
+    setFilterLocations([]);
+    setFilterTags([]);
+    setSearchQuery('');
+    navigate('/');
+  };
+
   return (
     <>
-      {/* FILTER BAR */}
       <div className="filter-bar">
         <div className="navbar-flavor-text">Discover what’s going on!</div>
 
@@ -63,7 +124,7 @@ function PosterFilters({
             type="date"
             className="filter-control filter-control--date"
             value={filterDate}
-            onChange={e => setFilterDate(e.target.value)}
+            onChange={(e) => setFilterDate(e.target.value)}
           />
 
           <MultiSelectDropdown
@@ -100,25 +161,43 @@ function PosterFilters({
         </div>
       </div>
 
-      {/* CATEGORY BAR */}
-      <div className="category-bar">
-        {categories.map(cat => (
-          <div className="event-category" key={cat}>
-            <Link
-              to={cat === 'All' ? '/' : `/${cat}`}
-              className={activeCategory === cat ? 'active' : ''}
-            >
-              <div className="icon-wrap">
-                <img
-                  src={`/${cat.toLowerCase()}.svg`}
-                  alt={`${cat.toLowerCase()} icon`}
-                />
-              </div>
+      <div className="category-bar-wrap">
+        <CategoryScrollArrow
+          direction="left"
+          visible={hasOverflow && canScrollLeft}
+          onClick={() => scrollCategories('left')}
+          label="Scroll categories left"
+        />
 
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </Link>
-          </div>
-        ))}
+        <div
+          ref={categoryScrollRef}
+          className={`category-bar${!hasOverflow ? ' category-bar--centered' : ''}`}
+          onScroll={updateScrollState}
+        >
+          {categories.map((cat) => (
+            <div className="event-category" key={cat}>
+              <Link
+                to={cat === 'All' ? '/' : `/${cat}`}
+                className={activeCategory === cat ? 'active' : ''}
+              >
+                <div className="icon-wrap">
+                  <img
+                    src={`/${cat.toLowerCase()}.svg`}
+                    alt={`${cat.toLowerCase()} icon`}
+                  />
+                </div>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        <CategoryScrollArrow
+          direction="right"
+          visible={hasOverflow && canScrollRight}
+          onClick={() => scrollCategories('right')}
+          label="Scroll categories right"
+        />
       </div>
     </>
   );

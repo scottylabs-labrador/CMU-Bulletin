@@ -18,6 +18,8 @@ function EditPoster() {
   const [tags, setTags] = useState('');
   const [repeating, setRepeating] = useState(false);
   const [singleEventDate, setSingleEventDate] = useState('');
+  const [singleEventTime, setSingleEventTime] = useState('');
+  const [singleEventTimeEnd, setSingleEventTimeEnd] = useState('');
   const [nextOccurringDate, setNextOccurringDate] = useState('');
   const [frequency, setFrequency] = useState('');
   const [daysOfWeek, setDaysOfWeek] = useState([]);
@@ -79,6 +81,8 @@ function EditPoster() {
         setTags(Array.isArray(data.tags) ? data.tags.join(', ') : data.tags || ''); // Tags are string, convert array to string if needed
         setRepeating(data.repeating || false);
         setSingleEventDate(data.single_event_date || '');
+        setSingleEventTime(data.single_event_time || '');
+        setSingleEventTimeEnd(data.single_event_time_end || '');
         setNextOccurringDate(data.next_occurring_date || '');
         setFrequency(data.frequency || '');
         setDaysOfWeek(data.days_of_week || []);
@@ -193,10 +197,14 @@ function EditPoster() {
         updatedData.next_occurring_date = nextOccurringDate;
         updatedData.frequency = frequency;
         updatedData.days_of_week = daysOfWeek;
-        updatedData.single_event_date = ''; // Clear single event date if repeating
+        updatedData.single_event_date = '';
+        updatedData.single_event_time = '';
+        updatedData.single_event_time_end = '';
       } else {
         updatedData.single_event_date = singleEventDate;
-        updatedData.next_occurring_date = ''; // Clear repeating fields if not repeating
+        updatedData.single_event_time = singleEventTime || '';
+        updatedData.single_event_time_end = singleEventTimeEnd || '';
+        updatedData.next_occurring_date = '';
         updatedData.frequency = '';
         updatedData.days_of_week = [];
       }
@@ -279,10 +287,20 @@ function EditPoster() {
         </div>
 
         {!repeating && (
-          <div>
-            <label>Event Date:</label>
-            <input type="date" value={singleEventDate} onChange={(e) => setSingleEventDate(e.target.value)} />
-          </div>
+          <>
+            <div>
+              <label>Event Date:</label>
+              <input type="date" value={singleEventDate} onChange={(e) => setSingleEventDate(e.target.value)} />
+            </div>
+            <div>
+              <label>Time (optional):</label>
+              <input type="time" value={singleEventTime} onChange={(e) => setSingleEventTime(e.target.value)} />
+            </div>
+            <div>
+              <label>End time (optional):</label>
+              <input type="time" value={singleEventTimeEnd} onChange={(e) => setSingleEventTimeEnd(e.target.value)} />
+            </div>
+          </>
         )}
 
         {repeating && (

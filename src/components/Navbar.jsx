@@ -64,25 +64,27 @@ function Navbar({ user, searchQuery, setSearchQuery }) {
         <div className="nav-buttons-container">
           {user ? (
             <>
-              <Link to="/post" className="createbtn">
-                <img src="/plus-icon.svg" alt="plus icon"/>
+              <Link to="/post" className="createbtn nav-create-btn">
+                <img src="/plus-icon.svg" alt="" aria-hidden="true" />
                 <span>Create</span>
               </Link>
 
-              <button className="clearbtn">
-                <img src="/heart-icon.svg" alt="heart icon" />
-              </button>
+              <div className="nav-icon-group">
+                <button type="button" className="nav-icon-btn" aria-label="Liked posters">
+                  <img src="/heart-icon.svg" alt="" aria-hidden="true" />
+                </button>
 
-              <button className="clearbtn">
-                <img src="/bell-icon.svg" alt="bell icon" />
-              </button>
+                <button type="button" className="nav-icon-btn" aria-label="Notifications">
+                  <img src="/bell-icon.svg" alt="" aria-hidden="true" />
+                </button>
 
-              <Link to="/profile" className="clearbtn" style={{ '--size': '36px' }}>
-                <img src="/tester-pfp-icon.svg" alt="Profile Picture" />
-              </Link>
-              
-              <button className="clearbtn" onClick={toggleDropdown} style={{ '--size': '28px' }}>
-                <img src="/drop-down-icon.svg" alt="Toggle Dropdown" />
+                <Link to="/profile" className="nav-icon-btn nav-icon-btn--profile" aria-label="Profile">
+                  <img src="/tester-pfp-icon.svg" alt="" aria-hidden="true" />
+                </Link>
+              </div>
+
+              <button type="button" className="clearbtn" onClick={toggleDropdown} style={{ '--size': '28px' }} aria-label="Toggle menu">
+                <img src="/drop-down-icon.svg" alt="" aria-hidden="true" />
               </button>
 
               {/*This is the actual menu that appears/disappears
@@ -96,15 +98,13 @@ function Navbar({ user, searchQuery, setSearchQuery }) {
             </>
           ) : (
             <>
-            
-            <Link to="/authlogin" className="clearloginbtn">
+            <Link to="/authlogin" className="nav-auth-btn nav-auth-btn--login">
               <span>Log In</span>
             </Link>
-            
-            <Link to="/authsignup" className="blackbtn">
-            <span>Sign Up</span>
+
+            <Link to="/authsignup" className="nav-auth-btn nav-auth-btn--signup">
+              <span>Sign Up</span>
             </Link>
-            
             </>
           )}
         </div>
