@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import FeatureHero from "./FeatureHero";
 import PosterFilters from "./PosterFilters";
 import PosterList from "./PosterList";
 
@@ -6,31 +7,34 @@ function MainPage({ user, activeCategory, filterDate, setFilterDate, filterLocat
 
   return (
     <div className="main-page">
-      
-      <PosterFilters
-        filterDate={filterDate}
-        setFilterDate={setFilterDate}
-        filterLocations={filterLocations}
-        setFilterLocations={setFilterLocations}
-        filterTags={filterTags}
-        setFilterTags={setFilterTags}
-        availableTags={availableTags}
-        toggleViewMode={toggleViewMode}
-        activeCategory={activeCategory}
-      />
+      <div className="page-content main-page-content">
+        <FeatureHero activeCategory={activeCategory} />
 
-      <div className="poster-list-wrapper">
+        <PosterFilters
+          filterDate={filterDate}
+          setFilterDate={setFilterDate}
+          filterLocations={filterLocations}
+          setFilterLocations={setFilterLocations}
+          filterTags={filterTags}
+          setFilterTags={setFilterTags}
+          availableTags={availableTags}
+          toggleViewMode={toggleViewMode}
+          viewMode={viewMode}
+          activeCategory={activeCategory}
+          setSearchQuery={setSearchQuery}
+        />
 
-        <PosterList
+        <div className="poster-list-wrapper">
+          <PosterList
             filterDate={filterDate}
             filterLocations={filterLocations}
             filterTags={filterTags}
             searchQuery={searchQuery}
             user={user}
             viewMode={viewMode}
-        />
+          />
         </div>
-
+      </div>
     </div>
   );
 }

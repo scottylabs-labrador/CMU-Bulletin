@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db } from '../firebase';
+import { auth, db, getUserDisplayName } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -51,7 +51,7 @@ function UserProfile() {
           } else if (poster.uploaded_by && !names[poster.uploaded_by]) {
             const userDoc = await getDoc(doc(db, 'users', poster.uploaded_by));
             if (userDoc.exists()) {
-              names[poster.uploaded_by] = `${userDoc.data().firstName} ${userDoc.data().lastName}`;
+              names[poster.uploaded_by] = getUserDisplayName(userDoc.data());
             }
           }
         }
@@ -78,7 +78,7 @@ function UserProfile() {
           } else if (poster.uploaded_by && !names[poster.uploaded_by]) {
             const userDoc = await getDoc(doc(db, 'users', poster.uploaded_by));
             if (userDoc.exists()) {
-              names[poster.uploaded_by] = `${userDoc.data().firstName} ${userDoc.data().lastName}`;
+              names[poster.uploaded_by] = getUserDisplayName(userDoc.data());
             }
           }
         }
@@ -98,8 +98,7 @@ function UserProfile() {
       const fetchUploaderName = async () => {
         const userDoc = await getDoc(doc(db, 'users', selectedPoster.uploaded_by));
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUploaderName(`${userData.firstName} ${userData.lastName}`);
+          setUploaderName(getUserDisplayName(userDoc.data()));
         } else {
           setUploaderName('Unknown');
         }
@@ -176,7 +175,7 @@ function UserProfile() {
         <h2>User Profile</h2>
         {userData && (
           <>
-            <p><strong>Name:</strong> {userData.firstName} {userData.lastName}</p>
+            <p><strong>Name:</strong> {getUserDisplayName(userData)}</p>
             <p><strong>Email:</strong> {currentUser.email}</p>
             {userData.organization && <p><strong>Organization:</strong> {userData.organization}</p>}
           </>

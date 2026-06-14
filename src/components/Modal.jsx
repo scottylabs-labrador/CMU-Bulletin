@@ -1,6 +1,6 @@
 // src/components/Modal.jsx
 import React from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { createPortal } from 'react-dom';
 import HeartIcon from './HeartIcon';
 
 function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploaderName }) {
@@ -8,7 +8,15 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
 
   const googleCalUrl = poster.googleCalUrl;
 
-  return (
+  const toTagList = (value) => {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+  };
+
+  const formatTagLabel = (tag) =>
+    tag.charAt(0).toUpperCase() + tag.slice(1);
+
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent clicks inside from closing modal */}
         {/* <button className="modal-close-btn" onClick={onClose}>&times;</button> */}
@@ -39,41 +47,42 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
             <h2>{poster.title}</h2>
             <p><strong>{poster.organizer ? 'Organizer:' : 'Uploaded by:'}</strong> {poster.organizer || uploaderName || 'Unknown'}</p>
             {!poster.repeating && poster.single_event_date && (
-              <div className="align-icon">
-              
-              <img src='\time-icon.svg'></img>
-              <span><strong></strong>    {poster.single_event_date}</span>
+              <div className="align-icon modal-meta">
+              <img src="/time-icon.svg" alt="" />
+              <span>{poster.single_event_date}</span>
               </div>
             )}
-           
 
-            <div className="align-icon">
-              
-              <img src='\location-icon.svg'></img>
-              <span><strong></strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</span>
-
+            <div className="align-icon modal-meta">
+              <img src="/location-icon.svg" alt="" />
+              <span>{Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</span>
             </div>
 
-            <br/>
+            <p className="modal-description">{poster.description}</p>
 
-            <p>{poster.description}</p>
-            
+            {toTagList(poster.category).length > 0 && (
+              <div className="modal-tags-section">
+                <div className="modal-tag-list">
+                  {toTagList(poster.category).map((cat) => (
+                    <span key={cat} className="modal-tag-pill">
+                      {formatTagLabel(cat)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            <div>
-              {/* <div className="modal-icon">
-                <img src='\location-icon.svg'></img>
-                <p><strong>Location:</strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</p>
-              </div> */}
-
-            </div>
-
-            
-
-            
-            
-            <p><strong>Category:</strong> {Array.isArray(poster.category) ? poster.category.join(', ') : poster.category}</p>
             {poster.tags && poster.tags.length > 0 && (
-              <p><strong>Tags:</strong> {poster.tags.join(', ')}</p>
+              <div className="modal-tags-section">
+                <span className="modal-tags-label">Tags</span>
+                <div className="modal-tag-list">
+                  {poster.tags.map((tag) => (
+                    <span key={tag} className="modal-tag-pill">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
             {poster.repeating && (
               <>
@@ -84,57 +93,23 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
             )}
 
           {googleCalUrl && (
-              <div style={{ textAlign: 'center' }}>
-                  
-
-                  
-                  <p >
-                      <a 
-                          className="calendar-link"
-                          href={googleCalUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          style={{
-                            display: "inline-block",
-                            backgroundColor: "black",
-                            color: "white",
-                            textDecoration: "none",
-                            padding: "10px 20px",
-                            borderRadius: "20px"
-                          }}
-                          // inline styling unoptimal but temporary fix 
-                          // until figure out how to override the anchor styling
-                         
-                       
-                      >
-                          <div className="align-icon">
-              
-                            <img src='\calendar-icon.svg'></img>
-                            <span><strong></strong> Add to Google Calendar</span>
-
-                          </div>
-                          
-                      </a>
-                  </p>
-
-
-                  {/* <h4 style={{ marginBottom: '10px', fontSize: '1rem', fontWeight: 'bold' }}>Add to Calendar</h4> */}
-                  {/* QR Code */}
-                  {/* <QRCodeSVG 
-                      value={googleCalUrl}
-                      size={100}
-                      level="L"
-                  /> */}
-                  {/* hiding this for now until find way to integrate better visually */}
-
-                  {/* Direct Clickable Link */}
-                  
+              <div className="modal-calendar-section">
+                  <a
+                    className="modal-calendar-btn"
+                    href={googleCalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img src="/calendar-icon.svg" alt="" className="modal-calendar-btn__icon" />
+                    Add to Google Calendar
+                  </a>
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

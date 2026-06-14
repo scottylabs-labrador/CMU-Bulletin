@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import MultiSelectDropdown from './MultiSelectDropdown';
 
 function PosterFilters({
@@ -11,8 +11,19 @@ function PosterFilters({
   setFilterTags,
   availableTags,
   toggleViewMode,
-  activeCategory
+  viewMode,
+  activeCategory,
+  setSearchQuery,
 }) {
+  const navigate = useNavigate();
+
+  const handleResetFilters = () => {
+    setFilterDate('');
+    setFilterLocations([]);
+    setFilterTags([]);
+    setSearchQuery('');
+    navigate('/');
+  };
   
   const categories = ['All', 'career', 'club', 'performance', 'sport', 'social', 'academic'];
 
@@ -39,40 +50,54 @@ function PosterFilters({
       <div className="filter-bar">
         <div className="navbar-flavor-text">Discover what’s going on!</div>
 
-        <input
-          className="choose-date"
-          type="date"
-          value={filterDate}
-          onChange={e => setFilterDate(e.target.value)}
-        />
+        <div className="filter-bar__controls">
+          <button
+            type="button"
+            className="filter-reset-link"
+            onClick={handleResetFilters}
+          >
+            Reset filters
+          </button>
 
-        <MultiSelectDropdown
-          label={
-            <>
-              <img src="./location-icon.svg" alt="Location" />
-              Location
-            </>
-          }
-          options={availableLocations}
-          selectedOptions={filterLocations}
-          onChange={setFilterLocations}
-        />
+          <input
+            type="date"
+            className="filter-control filter-control--date"
+            value={filterDate}
+            onChange={e => setFilterDate(e.target.value)}
+          />
 
-        <MultiSelectDropdown
-          label={
-            <>
-              <img src="./tag-icon.svg" alt="Tags" />
-              Tags
-            </>
-          }
-          options={availableTags}
-          selectedOptions={filterTags}
-          onChange={setFilterTags}
-        />
+          <MultiSelectDropdown
+            label={
+              <>
+                <img src="/location-icon.svg" alt="" />
+                Location
+              </>
+            }
+            options={availableLocations}
+            selectedOptions={filterLocations}
+            onChange={setFilterLocations}
+          />
 
-        <button onClick={toggleViewMode}>
-          Toggle View
-        </button>
+          <MultiSelectDropdown
+            label={
+              <>
+                <img src="/tag-icon.svg" alt="" />
+                Tags
+              </>
+            }
+            options={availableTags}
+            selectedOptions={filterTags}
+            onChange={setFilterTags}
+          />
+
+          <button
+            type="button"
+            className="filter-control filter-control--view"
+            onClick={toggleViewMode}
+          >
+            {viewMode === 'grid' ? 'List View' : 'Grid View'}
+          </button>
+        </div>
       </div>
 
       {/* CATEGORY BAR */}

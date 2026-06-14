@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 // Import Firestore SDK functions and database instance
-import { db } from '../firebase';
+import { db, getUserDisplayName } from '../firebase';
 import { collection, query, onSnapshot, orderBy, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 // Import the modal component for poster details
@@ -179,10 +179,11 @@ const createGoogleCalendarLink = (poster) => {
 
 // masonry testing stuff!
 const breakpointColumnsObj = {
-  default: 4,
-  1200: 3,
-  800: 2,
-  500: 1
+  default: 5,
+  1400: 4,
+  1100: 3,
+  768: 2,
+  500: 1,
 };
 
 
@@ -254,7 +255,7 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
         } else if (poster.uploaded_by && !names[poster.uploaded_by]) {
           const userDoc = await getDoc(doc(db, 'users', poster.uploaded_by));
           if (userDoc.exists()) {
-            names[poster.uploaded_by] = `${userDoc.data().firstName} ${userDoc.data().lastName}`;
+            names[poster.uploaded_by] = getUserDisplayName(userDoc.data());
           }
         }
       }

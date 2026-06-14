@@ -3,17 +3,15 @@ import { Link, useLocation } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 
-function Navbar({ user, setSearchQuery}) {
-  const [searchInput, setSearchInput] = useState('');
+function Navbar({ user, searchQuery, setSearchQuery }) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const toggleDropdown = () => setIsOpen(!isOpen);  
 
   const isProfilePage = location.pathname === '/profile';
-  const isAuthPage = location.pathname === '/authsignup';
+  const isAuthPage = location.pathname === '/authsignup' || location.pathname === '/authlogin';
 
   const handleSearchChange = (e) => {
-    setSearchInput(e.target.value);
     setSearchQuery(e.target.value);
   };
 
@@ -40,7 +38,8 @@ function Navbar({ user, setSearchQuery}) {
 
   return (
     <header>
-      <div className="top-bar">
+      <div className="page-content navbar-content">
+        <div className="top-bar">
         <div className="title-logo"> 
           <Link to="/" className="logo-button-link">
             <img src="./logo-small.svg" alt="CMU Logo" />
@@ -56,7 +55,7 @@ function Navbar({ user, setSearchQuery}) {
           <input
             type="text"
             placeholder="Search for events, information..."
-            value={searchInput}
+            value={searchQuery}
             onChange={handleSearchChange}
           />
         </div> 
@@ -78,11 +77,11 @@ function Navbar({ user, setSearchQuery}) {
                 <img src="/bell-icon.svg" alt="bell icon" />
               </button>
 
-              <Link to="/profile" className="clearbtn" style={{'--size':'50px','padding--':'2 rem'}}>
+              <Link to="/profile" className="clearbtn" style={{ '--size': '36px' }}>
                 <img src="/tester-pfp-icon.svg" alt="Profile Picture" />
               </Link>
               
-              <button className="clearbtn" onClick={toggleDropdown} style={{'--size':'30px' }}>
+              <button className="clearbtn" onClick={toggleDropdown} style={{ '--size': '28px' }}>
                 <img src="/drop-down-icon.svg" alt="Toggle Dropdown" />
               </button>
 
@@ -98,22 +97,19 @@ function Navbar({ user, setSearchQuery}) {
           ) : (
             <>
             
-            <Link to="/AuthLogin" className="clearloginbtn">
+            <Link to="/authlogin" className="clearloginbtn">
               <span>Log In</span>
-              {/* <p>Log in</p> */}
             </Link>
             
-            <Link to="/AuthSignUp" className="blackbtn">
+            <Link to="/authsignup" className="blackbtn">
             <span>Sign Up</span>
             </Link>
             
             </>
           )}
         </div>
+        </div>
       </div>
-
-
-      
     </header>
   );
 }
