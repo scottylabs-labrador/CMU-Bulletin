@@ -1,8 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
-import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import MultiSelectDropdown from './MultiSelectDropdown';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import LocationSearchInput from './LocationSearchInput';
+import TagInput from './TagInput';
+import {
+  POSTER_CATEGORY_OPTIONS,
+  PREMADE_LOCATIONS,
+  PREMADE_LOCATION_SET,
+} from './PosterFilters';
+import './PosterUpload.css';
+
+const daysOfWeekOptions = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+function splitLocations(locations) {
+  const premade = [];
+  const custom = [];
+
+  locations.forEach((location) => {
+    if (PREMADE_LOCATION_SET.has(location)) {
+      premade.push(location);
+    } else if (location && location !== 'Other') {
+      custom.push(location);
+    }
+  });
+
+  return { premade, custom };
+}
+
+function mergeLocations(premade, custom) {
+  return [...premade, ...custom];
+}
+
+function normalizeLocations(rawLocation) {
+  if (!rawLocation) return [];
+  const locations = Array.isArray(rawLocation) ? rawLocation : [rawLocation];
+  return locations.filter((location) => location && location !== 'Other');
+}
+
+function normalizeTags(rawTags) {
+  if (Array.isArray(rawTags)) {
+    return rawTags.filter((tag) => typeof tag === 'string' && tag.trim() !== '');
+  }
+  if (typeof rawTags === 'string' && rawTags.trim()) {
+    return rawTags.split(',').map((tag) => tag.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function processImageFile(file, onComplete, onInvalid) {
+  if (!file || !file.type.startsWith('image/')) {
+    onInvalid?.();
+    return false;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 800;
+      const MAX_HEIGHT = 800;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else if (height > MAX_HEIGHT) {
+        width *= MAX_HEIGHT / height;
+        height = MAX_HEIGHT;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      onComplete(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+  return true;
+}
 
 function EditPoster() {
   const { id } = useParams();
@@ -12,10 +102,9 @@ function EditPoster() {
   const [organizer, setOrganizer] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState([]);
-  const [otherLocation, setOtherLocation] = useState('');
   const [category, setCategory] = useState([]);
   const [image, setImage] = useState(null);
-  const [tags, setTags] = useState('');
+  const [tags, setTags] = useState([]);
   const [repeating, setRepeating] = useState(false);
   const [singleEventDate, setSingleEventDate] = useState('');
   const [singleEventTime, setSingleEventTime] = useState('');
@@ -24,130 +113,114 @@ function EditPoster() {
   const [frequency, setFrequency] = useState('');
   const [daysOfWeek, setDaysOfWeek] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = useState(null); // To display existing image
+  const [currentImageUrl, setCurrentImageUrl] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const availableCategories = ['career', 'club', 'performance', 'sports', 'wellness'];
-  const availableLocations = [
-    'University Center',
-    'Hunt Library',
-    'Purnell',
-    'CFA',
-    'Wean',
-    'Gates',
-    'Tepper',
-    'The Cut',
-    'Baker-Porter',
-    'Posner',
-    'Scaife',
-    'Online',
-    'Off-Campus',
-    'Other',
-  ];
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchPoster = async () => {
       if (!id) return;
-      const docRef = doc(db, 'posters', id);
-      const docSnap = await getDoc(docRef);
 
-      if (docSnap.exists()) {
+      try {
+        const docRef = doc(db, 'posters', id);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          navigate('/profile');
+          return;
+        }
+
         const data = docSnap.data();
+
+        if (auth.currentUser && data.uploaded_by !== auth.currentUser.uid) {
+          navigate('/profile');
+          return;
+        }
+
         setTitle(data.title || '');
         setOrganizer(data.organizer || '');
         setDescription(data.description || '');
-        
-        // Handle location (can be string or array)
-        if (Array.isArray(data.location)) {
-          setLocation(data.location.filter(loc => availableLocations.includes(loc)));
-          const otherLoc = data.location.find(loc => !availableLocations.includes(loc));
-          if (otherLoc) {
-            setLocation(prev => [...prev, 'Other']);
-            setOtherLocation(otherLoc);
-          }
-        } else if (typeof data.location === 'string') {
-          // For older posts with single string location
-          if (availableLocations.includes(data.location)) {
-            setLocation([data.location]);
-          } else {
-            setLocation(['Other']);
-            setOtherLocation(data.location);
-          }
-        }
-
-        setCategory(data.category || []);
+        setLocation(normalizeLocations(data.location));
+        setCategory(Array.isArray(data.category) ? data.category : []);
         setCurrentImageUrl(data.image_url || null);
-        setTags(Array.isArray(data.tags) ? data.tags.join(', ') : data.tags || ''); // Tags are string, convert array to string if needed
-        setRepeating(data.repeating || false);
+        setTags(normalizeTags(data.tags));
+        setRepeating(Boolean(data.repeating));
         setSingleEventDate(data.single_event_date || '');
         setSingleEventTime(data.single_event_time || '');
         setSingleEventTimeEnd(data.single_event_time_end || '');
         setNextOccurringDate(data.next_occurring_date || '');
         setFrequency(data.frequency || '');
-        setDaysOfWeek(data.days_of_week || []);
-      } else {
-        console.error("No such document!");
-        navigate('/profile'); // Redirect if post not found
+        setDaysOfWeek(Array.isArray(data.days_of_week) ? data.days_of_week : []);
+      } catch (err) {
+        console.error('Failed to load poster:', err);
+        setError('Failed to load poster.');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchPoster();
   }, [id, navigate]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 800;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        setImage(dataUrl);
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+  const handleImageFile = (file) => {
+    const accepted = processImageFile(
+      file,
+      setImage,
+      () => setError('Please upload a valid image file.')
+    );
+    if (accepted) setError(null);
   };
 
-  const handleDayChange = (e) => {
-    const { value, checked } = e.target;
-    setDaysOfWeek(prev => 
-      checked ? [...prev, value] : prev.filter(day => day !== value)
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (file) handleImageFile(file);
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) handleImageFile(file);
+  };
+
+  const handleDayChange = (event) => {
+    const { value, checked } = event.target;
+    setDaysOfWeek((prev) =>
+      checked ? [...prev, value] : prev.filter((day) => day !== value)
     );
   };
 
-  const handleCategoryChange = (e) => {
-    const { value, checked } = e.target;
-    setCategory(prev =>
-      checked ? [...prev, value] : prev.filter(c => c !== value)
+  const handleCategoryChange = (event) => {
+    const { value, checked } = event.target;
+    setCategory((prev) =>
+      checked ? [...prev, value] : prev.filter((item) => item !== value)
     );
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleLocationChange = ({ premade, custom }) => {
+    setLocation(mergeLocations(premade, custom));
+  };
+
+  const { premade: selectedPremade, custom: customLocations } = splitLocations(location);
+  const displayImage = image || currentImageUrl;
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     if (!auth.currentUser) {
       setError('You must be logged in to edit a poster.');
       return;
@@ -157,11 +230,7 @@ function EditPoster() {
       return;
     }
     if (location.length === 0) {
-      setError('Please select at least one location.');
-      return;
-    }
-    if (location.includes('Other') && !otherLocation.trim()) {
-      setError('Please specify the other location.');
+      setError('Please add at least one location.');
       return;
     }
 
@@ -170,27 +239,21 @@ function EditPoster() {
     setSuccess(false);
 
     try {
-      let finalLocations = [...location];
-      if (location.includes('Other')) {
-        finalLocations = finalLocations.filter(loc => loc !== 'Other');
-        finalLocations.push(otherLocation.trim());
-      }
-
       const updatedData = {
         title,
         organizer,
         description,
-        location: finalLocations,
+        location,
         category,
         uploaded_by: auth.currentUser.uid,
-        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
+        tags,
         repeating,
         image_filename: `${title.split(' ')[0] || 'untitled'}.png`,
         sort_date: repeating ? nextOccurringDate : singleEventDate,
       };
 
       if (image) {
-        updatedData.image_url = image; // Only update image if a new one is selected
+        updatedData.image_url = image;
       }
 
       if (repeating) {
@@ -212,138 +275,287 @@ function EditPoster() {
       await updateDoc(doc(db, 'posters', id), updatedData);
 
       setSuccess(true);
-      setUploading(false);
-      alert('Poster updated successfully!');
-      navigate('/profile'); // Redirect back to profile after update
-
+      setTimeout(() => navigate('/profile'), 800);
     } catch (err) {
       setError(err.message);
+    } finally {
       setUploading(false);
     }
   };
 
+  const dropzoneClassName = [
+    'poster-upload-dropzone',
+    isDragging ? 'poster-upload-dropzone--dragging' : '',
+    displayImage ? 'poster-upload-dropzone--has-image' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  if (loading) {
+    return (
+      <div className="page-content poster-upload-page">
+        <div className="poster-upload-container">
+          <p className="poster-upload-message">Loading poster…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="form-container">
-      <h2>Edit Poster</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Title:</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        </div>
-        <div>
-          <label>Organizer:</label>
-          <input type="text" value={organizer} onChange={(e) => setOrganizer(e.target.value)} required />
-        </div>
-        <div>
-          <label>Description:</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
-        </div>
-        <div>
-          <label>Location:</label>
-          <MultiSelectDropdown
-            label="Select Location"
-            options={availableLocations}
-            selectedOptions={location}
-            onChange={setLocation}
-          />
-          {location.includes('Other') && (
-            <div>
-              <label>Specify Other Location:</label>
-              <input type="text" value={otherLocation} onChange={(e) => setOtherLocation(e.target.value)} required={location.includes('Other')} />
+    <div className="page-content poster-upload-page">
+      <div className="poster-upload-container">
+        <form className="poster-upload-form" onSubmit={handleSubmit}>
+          <div className="poster-upload-header">
+            <h2>Edit Poster</h2>
+            <div className="poster-upload-header__actions">
+              <button
+                type="button"
+                className="poster-upload-cancel"
+                onClick={() => navigate('/profile')}
+              >
+                Cancel
+              </button>
+              <button type="submit" disabled={uploading} className="poster-upload-submit">
+                {uploading ? 'Saving…' : 'Save changes'}
+              </button>
             </div>
-          )}
-        </div>
-        <div>
-          <label>Categories:</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-            {availableCategories.map(cat => (
-              <label key={cat}>
-                <input
-                  type="checkbox"
-                  value={cat}
-                  checked={category.includes(cat)}
-                  onChange={handleCategoryChange}
-                />
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </label>
-            ))}
           </div>
-        </div>
-        <div>
-          <label>Current Image:</label>
-          {currentImageUrl && <img src={currentImageUrl} alt="Current Poster" style={{ maxWidth: '200px', maxHeight: '200px', marginBottom: '10px' }} />}
-          <label>Change Image (optional):</label>
-          <input type="file" onChange={handleImageChange} accept="image/*" />
-        </div>
-        <div>
-          <label>Tags (comma-separated):</label>
-          <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} />
-        </div>
-        <div>
-          <label>
-            <input type="checkbox" checked={repeating} onChange={(e) => setRepeating(e.target.checked)} />
-            Repeating Event
-          </label>
-        </div>
 
-        {!repeating && (
-          <>
-            <div>
-              <label>Event Date:</label>
-              <input type="date" value={singleEventDate} onChange={(e) => setSingleEventDate(e.target.value)} />
-            </div>
-            <div>
-              <label>Time (optional):</label>
-              <input type="time" value={singleEventTime} onChange={(e) => setSingleEventTime(e.target.value)} />
-            </div>
-            <div>
-              <label>End time (optional):</label>
-              <input type="time" value={singleEventTimeEnd} onChange={(e) => setSingleEventTimeEnd(e.target.value)} />
-            </div>
-          </>
-        )}
-
-        {repeating && (
-          <>
-            <div>
-              <label>Next Occurring Date:</label>
-              <input type="date" value={nextOccurringDate} onChange={(e) => setNextOccurringDate(e.target.value)} />
-            </div>
-            <div>
-              <label>Frequency:</label>
-              <select value={frequency} onChange={(e) => setFrequency(e.target.value)}>
-                <option value="">Select Frequency</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="bi-weekly">Every other week</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-            <div>
-              <label>Days of Week:</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                  <label key={day}>
-                    <input
-                      type="checkbox"
-                      value={day}
-                      checked={daysOfWeek.includes(day)}
-                      onChange={handleDayChange}
+          <div className="poster-upload-columns">
+            <div className="poster-upload-image-col">
+              <div
+                className={dropzoneClassName}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(keyEvent) => {
+                  if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+                    keyEvent.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+                aria-label="Change poster image"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="poster-upload-dropzone__input"
+                  onChange={handleImageChange}
+                  accept="image/*"
+                />
+                {displayImage ? (
+                  <>
+                    <img
+                      src={displayImage}
+                      alt="Poster preview"
+                      className="poster-upload-dropzone__preview"
                     />
-                    {day}
-                  </label>
-                ))}
+                    <span className="poster-upload-dropzone__change">Click to change image</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="poster-upload-dropzone__graphic"
+                      viewBox="0 0 72 72"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <rect x="8" y="14" width="56" height="44" rx="8" stroke="currentColor" strokeWidth="2" />
+                      <circle cx="26" cy="32" r="6" stroke="currentColor" strokeWidth="2" />
+                      <path d="M8 48L24 34L36 44L52 28L64 38" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M36 58V46M30 52L36 58L42 52" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <p className="poster-upload-dropzone__title">Change image</p>
+                    <p className="poster-upload-dropzone__hint">
+                      Drag and drop a new image here, or click to browse
+                    </p>
+                  </>
+                )}
               </div>
             </div>
-          </>
-        )}
 
-        <button type="submit" disabled={uploading} className="btn">
-          {uploading ? 'Updating...' : 'Update Poster'}
-        </button>
-        {error && <p className="form-message error">{error}</p>}
-        {success && <p className="form-message success">Poster updated successfully!</p>}
-      </form>
+            <div className="poster-upload-fields-col">
+              <div className="poster-upload-field poster-upload-field--primary">
+                <label htmlFor="edit-poster-title">Title</label>
+                <input
+                  id="edit-poster-title"
+                  type="text"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="poster-upload-field poster-upload-field--primary">
+                <label htmlFor="edit-poster-organizer">Organizer</label>
+                <input
+                  id="edit-poster-organizer"
+                  type="text"
+                  value={organizer}
+                  onChange={(event) => setOrganizer(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="poster-upload-field">
+                <label htmlFor="edit-poster-description">Description</label>
+                <textarea
+                  id="edit-poster-description"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                />
+              </div>
+
+              <div className="poster-upload-details-section">
+                <span className="poster-upload-section-label">Date and location</span>
+                <div className={`poster-upload-details-panel${repeating ? ' poster-upload-details-panel--location-only' : ''}`}>
+                  <div className="poster-upload-details-panel__body">
+                    {!repeating && (
+                      <>
+                        <div className="poster-upload-details-panel__col">
+                          <div className="poster-upload-icon-row">
+                            <img src="/time-icon.svg" alt="" aria-hidden="true" />
+                            <div className="poster-upload-icon-row__content poster-upload-schedule-compact">
+                              <input
+                                id="edit-poster-event-date"
+                                type="date"
+                                value={singleEventDate}
+                                onChange={(event) => setSingleEventDate(event.target.value)}
+                                aria-label="Event date"
+                              />
+                              <p className="poster-upload-schedule-compact__hint">Exact time optional</p>
+                              <div className="poster-upload-schedule-compact__times">
+                                <input
+                                  id="edit-poster-event-time-start"
+                                  type="time"
+                                  value={singleEventTime}
+                                  onChange={(event) => setSingleEventTime(event.target.value)}
+                                  aria-label="Start time (optional)"
+                                />
+                                <span className="poster-upload-schedule-compact__sep" aria-hidden="true">–</span>
+                                <input
+                                  id="edit-poster-event-time-end"
+                                  type="time"
+                                  value={singleEventTimeEnd}
+                                  onChange={(event) => setSingleEventTimeEnd(event.target.value)}
+                                  aria-label="End time (optional)"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="poster-upload-details-panel__divider" aria-hidden="true" />
+                      </>
+                    )}
+
+                    <div className="poster-upload-details-panel__col poster-upload-details-panel__col--location">
+                      <div className="poster-upload-icon-row">
+                        <img src="/location-icon.svg" alt="" aria-hidden="true" />
+                        <div className="poster-upload-icon-row__content">
+                          <LocationSearchInput
+                            premadeOptions={PREMADE_LOCATIONS}
+                            selectedPremade={selectedPremade}
+                            customLocations={customLocations}
+                            onChange={handleLocationChange}
+                            placeholder="Search locations…"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="poster-upload-field">
+                <span className="poster-upload-section-label">Categories</span>
+                <div className="poster-upload-pill-group">
+                  {POSTER_CATEGORY_OPTIONS.map((cat) => (
+                    <label key={cat} className="poster-upload-pill">
+                      <input
+                        type="checkbox"
+                        value={cat}
+                        checked={category.includes(cat)}
+                        onChange={handleCategoryChange}
+                      />
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="poster-upload-field">
+                <span className="poster-upload-section-label">Tags</span>
+                <TagInput tags={tags} onChange={setTags} />
+              </div>
+
+              <div className="poster-upload-checkbox-row">
+                <input
+                  id="edit-poster-repeating"
+                  type="checkbox"
+                  checked={repeating}
+                  onChange={(event) => setRepeating(event.target.checked)}
+                />
+                <label htmlFor="edit-poster-repeating">Repeating event</label>
+              </div>
+
+              {repeating && (
+                <>
+                  <div className="poster-upload-field">
+                    <label htmlFor="edit-poster-next-date">Next occurring date</label>
+                    <input
+                      id="edit-poster-next-date"
+                      type="date"
+                      value={nextOccurringDate}
+                      onChange={(event) => setNextOccurringDate(event.target.value)}
+                    />
+                  </div>
+                  <div className="poster-upload-field">
+                    <label htmlFor="edit-poster-frequency">Frequency</label>
+                    <select
+                      id="edit-poster-frequency"
+                      value={frequency}
+                      onChange={(event) => setFrequency(event.target.value)}
+                    >
+                      <option value="">Select frequency</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="bi-weekly">Every other week</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
+                  <div className="poster-upload-field">
+                    <span className="poster-upload-section-label">Days of week</span>
+                    <div className="poster-upload-days">
+                      {daysOfWeekOptions.map((day) => (
+                        <label key={day} className="poster-upload-pill">
+                          <input
+                            type="checkbox"
+                            value={day}
+                            checked={daysOfWeek.includes(day)}
+                            onChange={handleDayChange}
+                          />
+                          {day.slice(0, 3)}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {error && <p className="poster-upload-message poster-upload-message--error">{error}</p>}
+          {success && (
+            <p className="poster-upload-message poster-upload-message--success">
+              Poster updated successfully!
+            </p>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

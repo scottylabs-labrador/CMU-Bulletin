@@ -2,28 +2,35 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { db, auth } from '../firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import MultiSelectDropdown from './MultiSelectDropdown';
+import LocationSearchInput from './LocationSearchInput';
+import TagInput from './TagInput';
+import {
+  POSTER_CATEGORY_OPTIONS,
+  PREMADE_LOCATIONS,
+  PREMADE_LOCATION_SET,
+} from './PosterFilters';
 import './PosterUpload.css';
 
 const DRAFT_SAVE_DELAY_MS = 700;
 
-const availableCategories = ['career', 'club', 'performance', 'sports', 'wellness'];
-const availableLocations = [
-  'University Center',
-  'Hunt Library',
-  'Purnell',
-  'CFA',
-  'Wean',
-  'Gates',
-  'Tepper',
-  'The Cut',
-  'Baker-Porter',
-  'Posner',
-  'Scaife',
-  'Online',
-  'Off-Campus',
-  'Other',
-];
+function splitLocations(locations) {
+  const premade = [];
+  const custom = [];
+
+  locations.forEach((location) => {
+    if (PREMADE_LOCATION_SET.has(location)) {
+      premade.push(location);
+    } else if (location && location !== 'Other') {
+      custom.push(location);
+    }
+  });
+
+  return { premade, custom };
+}
+
+function mergeLocations(premade, custom) {
+  return [...premade, ...custom];
+}
 const daysOfWeekOptions = [
   'Monday',
   'Tuesday',
@@ -73,15 +80,26 @@ function processImageFile(file, onComplete) {
   return true;
 }
 
+function normalizeDraftTags(draftTags) {
+  if (Array.isArray(draftTags)) {
+    return draftTags.filter((tag) => typeof tag === 'string' && tag.trim() !== '');
+  }
+
+  if (typeof draftTags === 'string' && draftTags.trim()) {
+    return draftTags.split(',').map((tag) => tag.trim()).filter(Boolean);
+  }
+
+  return [];
+}
+
 function PosterUpload() {
   const [title, setTitle] = useState('');
   const [organizer, setOrganizer] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState([]);
-  const [otherLocation, setOtherLocation] = useState('');
   const [category, setCategory] = useState([]);
   const [image, setImage] = useState(null);
-  const [tags, setTags] = useState('');
+  const [tags, setTags] = useState([]);
   const [repeating, setRepeating] = useState(false);
   const [singleEventDate, setSingleEventDate] = useState('');
   const [singleEventTime, setSingleEventTime] = useState('');
@@ -104,7 +122,6 @@ function PosterUpload() {
     organizer,
     description,
     location,
-    otherLocation,
     category,
     image,
     tags,
@@ -121,7 +138,6 @@ function PosterUpload() {
     organizer,
     description,
     location,
-    otherLocation,
     category,
     image,
     tags,
@@ -138,11 +154,15 @@ function PosterUpload() {
     setTitle(draft.title || '');
     setOrganizer(draft.organizer || '');
     setDescription(draft.description || '');
-    setLocation(Array.isArray(draft.location) ? draft.location : []);
-    setOtherLocation(draft.otherLocation || '');
+    let draftLocations = Array.isArray(draft.location) ? draft.location : [];
+    if (draftLocations.includes('Other') && draft.otherLocation) {
+      draftLocations = draftLocations.filter((loc) => loc !== 'Other');
+      draftLocations.push(draft.otherLocation);
+    }
+    setLocation(draftLocations);
     setCategory(Array.isArray(draft.category) ? draft.category : []);
     setImage(draft.image || null);
-    setTags(draft.tags || '');
+    setTags(normalizeDraftTags(draft.tags));
     setRepeating(Boolean(draft.repeating));
     setSingleEventDate(draft.singleEventDate || '');
     setSingleEventTime(draft.singleEventTime || '');
@@ -240,6 +260,12 @@ function PosterUpload() {
     );
   };
 
+  const handleLocationChange = ({ premade, custom }) => {
+    setLocation(mergeLocations(premade, custom));
+  };
+
+  const { premade: selectedPremade, custom: customLocations } = splitLocations(location);
+
   const clearDraft = () => {
     const user = auth.currentUser;
     if (user) {
@@ -255,7 +281,7 @@ function PosterUpload() {
     setLocation([]);
     setCategory([]);
     setImage(null);
-    setTags('');
+    setTags([]);
     setRepeating(false);
     setSingleEventDate('');
     setSingleEventTime('');
@@ -263,7 +289,6 @@ function PosterUpload() {
     setNextOccurringDate('');
     setFrequency('');
     setDaysOfWeek([]);
-    setOtherLocation('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -285,11 +310,7 @@ function PosterUpload() {
       return;
     }
     if (location.length === 0) {
-      setError('Please select at least one location.');
-      return;
-    }
-    if (location.includes('Other') && !otherLocation.trim()) {
-      setError('Please specify the other location.');
+      setError('Please add at least one location.');
       return;
     }
 
@@ -298,21 +319,15 @@ function PosterUpload() {
     setSuccess(false);
 
     try {
-      let finalLocations = [...location];
-      if (location.includes('Other')) {
-        finalLocations = finalLocations.filter((loc) => loc !== 'Other');
-        finalLocations.push(otherLocation.trim());
-      }
-
       const posterData = {
         title,
         organizer,
         description,
-        location: finalLocations,
+        location,
         category,
         image_url: image,
         uploaded_by: auth.currentUser.uid,
-        tags: tags.split(',').map((tag) => tag.trim()).filter((tag) => tag !== ''),
+        tags,
         repeating,
         created_at: Timestamp.now(),
         image_filename: `${title.split(' ')[0] || 'untitled'}.png`,
@@ -439,25 +454,25 @@ function PosterUpload() {
 
             <div className="poster-upload-fields-col">
               <div className="poster-upload-field poster-upload-field--primary">
+                <label htmlFor="poster-title">Title</label>
                 <input
                   id="poster-title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Title"
-                  aria-label="Title"
+                  
                   required
                 />
               </div>
 
               <div className="poster-upload-field poster-upload-field--primary">
+                <label htmlFor="poster-organizer">Organizer</label>
                 <input
                   id="poster-organizer"
                   type="text"
                   value={organizer}
                   onChange={(e) => setOrganizer(e.target.value)}
-                  placeholder="Organizer"
-                  aria-label="Organizer"
+                  
                   required
                 />
               </div>
@@ -513,28 +528,17 @@ function PosterUpload() {
                       </>
                     )}
 
-                    <div className="poster-upload-details-panel__col">
+                    <div className="poster-upload-details-panel__col poster-upload-details-panel__col--location">
                       <div className="poster-upload-icon-row">
                         <img src="/location-icon.svg" alt="" aria-hidden="true" />
                         <div className="poster-upload-icon-row__content">
-                          <MultiSelectDropdown
-                            label="Select location"
-                            options={availableLocations}
-                            selectedOptions={location}
-                            onChange={setLocation}
+                          <LocationSearchInput
+                            premadeOptions={PREMADE_LOCATIONS}
+                            selectedPremade={selectedPremade}
+                            customLocations={customLocations}
+                            onChange={handleLocationChange}
+                            placeholder="Search locations…"
                           />
-                          {location.includes('Other') && (
-                            <input
-                              id="poster-other-location"
-                              type="text"
-                              className="poster-upload-details-panel__other"
-                              value={otherLocation}
-                              onChange={(e) => setOtherLocation(e.target.value)}
-                              placeholder="Specify other location"
-                              aria-label="Specify other location"
-                              required={location.includes('Other')}
-                            />
-                          )}
                         </div>
                       </div>
                     </div>
@@ -545,7 +549,7 @@ function PosterUpload() {
               <div className="poster-upload-field">
                 <span className="poster-upload-section-label">Categories</span>
                 <div className="poster-upload-pill-group">
-                  {availableCategories.map((cat) => (
+                  {POSTER_CATEGORY_OPTIONS.map((cat) => (
                     <label key={cat} className="poster-upload-pill">
                       <input
                         type="checkbox"
@@ -560,14 +564,8 @@ function PosterUpload() {
               </div>
 
               <div className="poster-upload-field">
-                <label htmlFor="poster-tags">Tags (comma-separated)</label>
-                <input
-                  id="poster-tags"
-                  type="text"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="e.g. free food, workshop"
-                />
+                <span className="poster-upload-section-label">Tags</span>
+                <TagInput tags={tags} onChange={setTags} />
               </div>
 
               <div className="poster-upload-checkbox-row">

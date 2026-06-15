@@ -5,8 +5,8 @@ function HeartIcon({ filled, onClick, style }) {
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      fill={filled ? 'red' : 'white'}
-      stroke={filled ? 'red' : 'black'}
+      fill={filled ? '#fd5170' : 'white'}
+      stroke={filled ? '#fd5170' : 'black'}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"

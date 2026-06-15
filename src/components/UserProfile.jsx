@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
+import EditProfileModal from './EditProfileModal';
 import PosterMasonry from './PosterMasonry';
 import './UserProfile.css';
 
@@ -14,6 +15,7 @@ function UserProfile() {
   const [uploaderName, setUploaderName] = useState('');
   const [userData, setUserData] = useState(null);
   const [activeTab, setActiveTab] = useState('my-posters');
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
   const pageWrapRef = useRef(null);
@@ -206,6 +208,7 @@ function UserProfile() {
 
   const activePosters = activeTab === 'my-posters' ? userPosts : likedPostersData;
   const showActions = activeTab === 'my-posters';
+  const profilePhotoSrc = userData?.profilePhotoUrl || '/tester-pfp-icon.svg';
 
   return (
     <div className="profile-page-wrap" ref={pageWrapRef}>
@@ -219,11 +222,18 @@ function UserProfile() {
         <div className="profile-info-card" ref={profileInfoRef}>
           <div className="profile-info-inner">
             <div className="profile-icon">
-              <img src="/tester-pfp-icon.svg" alt="Profile" />
+              <img
+                src={profilePhotoSrc}
+                alt="Profile"
+                className={userData?.profilePhotoUrl ? 'profile-icon__photo--custom' : ''}
+              />
             </div>
 
             <div className="profile-text">
               <h2>{getUserDisplayName(userData) || 'User Profile'}</h2>
+              {userData?.description && (
+                <p className="profile-description">{userData.description}</p>
+              )}
               {userData && (
                 <>
                   <p><strong>Email:</strong> {currentUser.email}</p>
@@ -232,9 +242,18 @@ function UserProfile() {
                   )}
                 </>
               )}
-              <button type="button" onClick={handleSignOut} className="profile-sign-out-btn">
-                Sign Out
-              </button>
+              <div className="profile-actions">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="profile-edit-btn"
+                >
+                  Edit profile
+                </button>
+                <button type="button" onClick={handleSignOut} className="profile-sign-out-btn">
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -288,6 +307,13 @@ function UserProfile() {
             likedPosters={likedPostersData.map((p) => p.id)}
             handleLikeToggle={handleLikeToggle}
             uploaderName={uploaderName}
+          />
+        )}
+
+        {isEditProfileOpen && (
+          <EditProfileModal
+            userData={userData}
+            onClose={() => setIsEditProfileOpen(false)}
           />
         )}
       </div>

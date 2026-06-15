@@ -15,27 +15,6 @@ function Navbar({ user, searchQuery, setSearchQuery }) {
     setSearchQuery(e.target.value);
   };
 
-  // const categories = ['All', 'career', 'club', 'social', 'performance', 'sports', 'academic', 'wellness']; // Hardcoded sorted
-  const categories = ['All', 'career', 'club', 'performance', 'sport', 'social', 'academic']; // shortened list for testing
-
-
-  const availableLocations = [
-    'University Center',
-    'Hunt Library',
-    'Purnell',
-    'CFA',
-    'Wean',
-    'Gates',
-    'Tepper',
-    'The Cut',
-    'Baker-Porter',
-    'Posner',
-    'Scaife',
-    'Online',
-    'Off-Campus',
-    'Other',
-  ];
-
   return (
     <header>
       <div className="page-content navbar-content">

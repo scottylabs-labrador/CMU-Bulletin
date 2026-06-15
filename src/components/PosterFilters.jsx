@@ -3,6 +3,44 @@ import { Link, useNavigate } from 'react-router-dom';
 import MultiSelectDropdown from './MultiSelectDropdown';
 import './PosterFilters.css';
 
+export const POSTER_CATEGORIES = ['All', 'career', 'clubs', 'performance', 'sports', 'social', 'academic'];
+
+export const POSTER_CATEGORY_OPTIONS = POSTER_CATEGORIES.filter((category) => category !== 'All');
+
+export const AVAILABLE_LOCATIONS = [
+  'University Center',
+  'Hunt Library',
+  'Purnell',
+  'CFA',
+  'Wean',
+  'Gates',
+  'Tepper',
+  'The Cut',
+  'Baker-Porter',
+  'Posner',
+  'Scaife',
+  'Doherty',
+  'Mellon Institute',
+  'Highmark Center',
+  'Online',
+  'Off-Campus',
+  'Other',
+];
+
+export const PREMADE_LOCATIONS = AVAILABLE_LOCATIONS.filter((location) => location !== 'Other');
+
+export const PREMADE_LOCATION_SET = new Set(PREMADE_LOCATIONS);
+
+export const normalizePosterLocations = (location) => {
+  if (!location) return [];
+  return Array.isArray(location) ? location : [location];
+};
+
+export const posterHasCustomLocation = (poster) =>
+  normalizePosterLocations(poster.location).some(
+    (loc) => loc && (loc === 'Other' || !PREMADE_LOCATION_SET.has(loc))
+  );
+
 function CategoryScrollArrow({ direction, visible, onClick, label }) {
   return (
     <button
@@ -41,25 +79,6 @@ function PosterFilters({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
-
-  const categories = ['All', 'career', 'club', 'performance', 'sport', 'social', 'academic'];
-
-  const availableLocations = [
-    'University Center',
-    'Hunt Library',
-    'Purnell',
-    'CFA',
-    'Wean',
-    'Gates',
-    'Tepper',
-    'The Cut',
-    'Baker-Porter',
-    'Posner',
-    'Scaife',
-    'Online',
-    'Off-Campus',
-    'Other',
-  ];
 
   const updateScrollState = useCallback(() => {
     const el = categoryScrollRef.current;
@@ -134,7 +153,7 @@ function PosterFilters({
                 Location
               </>
             }
-            options={availableLocations}
+            options={AVAILABLE_LOCATIONS}
             selectedOptions={filterLocations}
             onChange={setFilterLocations}
           />
@@ -174,7 +193,7 @@ function PosterFilters({
           className={`category-bar${!hasOverflow ? ' category-bar--centered' : ''}`}
           onScroll={updateScrollState}
         >
-          {categories.map((cat) => (
+          {POSTER_CATEGORIES.map((cat) => (
             <div className="event-category" key={cat}>
               <Link
                 to={cat === 'All' ? '/' : `/${cat}`}
