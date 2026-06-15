@@ -31,12 +31,11 @@ function MultiSelectDropdown({ label, options, selectedOptions, onChange }) {
 
   return (
     <div className="multi-select-dropdown" ref={dropdownRef}>
-      <button type="button" className="dropdown-toggle" onClick={handleToggle}>
-        <span className="dropdown-label">
-          {label}
-        </span>
-        
-        : {selectedOptions.length > 0 ? `${selectedOptions.length} Selected` : ''}
+      <button type="button" className="dropdown-toggle filter-control" onClick={handleToggle}>
+        <span className="dropdown-label">{label}</span>
+        {selectedOptions.length > 0 && (
+          <span className="dropdown-toggle__count">: {selectedOptions.length} Selected</span>
+        )}
       </button>
 
       {isOpen && (

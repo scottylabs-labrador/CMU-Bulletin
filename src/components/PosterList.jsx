@@ -3,16 +3,18 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 // Import Firestore SDK functions and database instance
-import { db } from '../firebase';
+import { db, getUserDisplayName } from '../firebase';
 import { collection, query, onSnapshot, orderBy, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 // Import the modal component for poster details
 import Modal from './Modal';
+import HeartIcon from './HeartIcon';
+import { formatEventDateTime } from '../utils/eventDateTime';
 
 // Import Masonry for column layout
-// npm install react-masonry-css
-// if stuff breaks bc not installed
-import Masonry from "react-masonry-css";
+import PosterMasonry from './PosterMasonry';
+import { normalizePosterLocations, posterHasCustomLocation } from './PosterFilters';
+import './PosterList.css';
 
 /*================================================================================
 Helper Function #1: Check if a recurring event occurs on a given date
@@ -176,25 +178,139 @@ const createGoogleCalendarLink = (poster) => {
   return `https://www.google.com/calendar/render?${params.toString()}`;
 };
 
-
-// masonry testing stuff!
-const breakpointColumnsObj = {
-  default: 4,
-  1200: 3,
-  800: 2,
-  500: 1
+const toTagList = (value) => {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
 };
 
+const formatTagLabel = (tag) => tag.charAt(0).toUpperCase() + tag.slice(1);
 
-// const placeholders = Array.from({ length: (breakpointColumnsObj.default) });
-
-const getFillerArray = (len) => {
-  
-  if (len < breakpointColumnsObj.default) 
-    return Array.from({ length: (breakpointColumnsObj.default - len) });
-  else 
-    return Array.from({ length: 0 });
+const formatLocation = (location) => {
+  if (!location) return '';
+  return Array.isArray(location) ? location.join(', ') : location;
 };
+
+const getOrganizerName = (poster, uploaderNames) =>
+  poster.organizer || uploaderNames[poster.uploaded_by] || 'Unknown';
+
+const getPosterDateTime = (poster) => {
+  if (poster.repeating) {
+    const today = new Date().toISOString().split('T')[0];
+    const nextDate = poster.next_occurring_date || findNextOccurrence(poster, today);
+    if (!nextDate) return null;
+    return formatEventDateTime(
+      nextDate,
+      poster.event_time || poster.single_event_time,
+      poster.single_event_time_end
+    );
+  }
+
+  if (!poster.single_event_date) return null;
+  return formatEventDateTime(
+    poster.single_event_date,
+    poster.single_event_time,
+    poster.single_event_time_end
+  );
+};
+
+function PosterListCard({ poster, user, likedPosters, onOpen, onLikeToggle, uploaderNames }) {
+  const categoryPills = toTagList(poster.category).map((cat) => ({
+    key: `category-${cat}`,
+    label: formatTagLabel(cat),
+  }));
+  const tagPills = (poster.tags || []).map((tag) => ({
+    key: `tag-${tag}`,
+    label: tag,
+  }));
+  const combinedPills = [...categoryPills, ...tagPills].slice(0, 4);
+  const extraPillCount = categoryPills.length + tagPills.length - combinedPills.length;
+  const dateTime = getPosterDateTime(poster);
+  const locationText = formatLocation(poster.location);
+
+  return (
+    <li>
+      <article
+        className="poster-list-card"
+        onClick={() => onOpen(poster)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onOpen(poster);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={`View details for ${poster.title}`}
+      >
+        <div className="poster-list-card__thumb">
+          <img src={poster.image_url} alt="" loading="lazy" />
+        </div>
+
+        <div className="poster-list-card__body">
+          <div className="poster-list-card__header">
+            <h3 className="poster-list-card__title">{poster.title}</h3>
+            {user && (
+              <button
+                type="button"
+                className="poster-list-card__like"
+                aria-label={likedPosters.includes(poster.id) ? 'Unlike poster' : 'Like poster'}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onLikeToggle(poster.id);
+                }}
+              >
+                <HeartIcon
+                  filled={likedPosters.includes(poster.id)}
+                  style={{ width: '18px', height: '18px', pointerEvents: 'none' }}
+                />
+              </button>
+            )}
+          </div>
+
+          <p className="poster-list-card__organizer">{getOrganizerName(poster, uploaderNames)}</p>
+
+          <div className="poster-list-card__meta">
+            {dateTime && (
+              <div className="align-icon">
+                <img src="/time-icon.svg" alt="" />
+                <span>{dateTime}</span>
+              </div>
+            )}
+            {locationText && (
+              <div className="align-icon">
+                <img src="/location-icon.svg" alt="" />
+                <span>{locationText}</span>
+              </div>
+            )}
+          </div>
+
+          {poster.repeating && (
+            <p className="poster-list-card__recurring">
+              Recurring{poster.frequency ? ` · ${poster.frequency}` : ''}
+            </p>
+          )}
+
+          {poster.description && (
+            <p className="poster-list-card__description">{poster.description}</p>
+          )}
+
+          {combinedPills.length > 0 && (
+            <div className="poster-list-card__tags">
+              {combinedPills.map((pill) => (
+                <span key={pill.key} className="poster-list-card__tag">
+                  {pill.label}
+                </span>
+              ))}
+              {extraPillCount > 0 && (
+                <span className="poster-list-card__tag">+{extraPillCount}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </article>
+    </li>
+  );
+}
 
 
 /**********************************************************************************/
@@ -254,7 +370,7 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
         } else if (poster.uploaded_by && !names[poster.uploaded_by]) {
           const userDoc = await getDoc(doc(db, 'users', poster.uploaded_by));
           if (userDoc.exists()) {
-            names[poster.uploaded_by] = `${userDoc.data().firstName} ${userDoc.data().lastName}`;
+            names[poster.uploaded_by] = getUserDisplayName(userDoc.data());
           }
         }
       }
@@ -352,11 +468,16 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
 
     // Filter by selected locations
     if (filterLocations.length > 0) {
-      currentPosters = currentPosters.filter(poster =>
-        filterLocations.some(location =>
-          poster.location.map(l => l.toLowerCase()).includes(location.toLowerCase())
-        )
-      );
+      currentPosters = currentPosters.filter((poster) => {
+        const posterLocs = normalizePosterLocations(poster.location).map((loc) => loc.toLowerCase());
+
+        return filterLocations.some((location) => {
+          if (location === 'Other') {
+            return posterHasCustomLocation(poster);
+          }
+          return posterLocs.includes(location.toLowerCase());
+        });
+      });
     }
 
     // Filter by selected tags
@@ -391,86 +512,50 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   return (
   <div>
     {/* Render Posters Based on the Current View Mode */}
-    {viewMode === 'grid' ? ( 
-      <div className="poster-grid">
-        {filteredPosters.length === 0 ? (
-          <div className="empty-state">
-            <h2>No posters yet.</h2>
-            <p>Be the first to share something!</p>
-          </div>
-        ) : (
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="poster-masonry"
-            columnClassName="poster-masonry-column"
-          >
-            {filteredPosters.map((poster) => (
-              <div key={poster.id} className="poster-card">
-                <img
-                  src={poster.image_url}
-                  alt={poster.title}
-                  onClick={() => handlePosterClick(poster)}
-                />
-              </div>
-            ))}
-
-            {getFillerArray(filteredPosters.length).map((_, i) => (
-                <div key={`ph-${i}`} className="poster-placeholder"></div>
-              ))}
-
-              {/* this may need to be allPosters.length for all page */}
-
-            {/* {placeholders.map((_, i) => (
-                <div key={`ph-${i}`} className="poster-placeholder"></div>
-              ))} */}
-
-          </Masonry>
-        )}
-      </div>
+    {viewMode === 'grid' ? (
+      filteredPosters.length === 0 ? (
+        <div className="empty-state">
+          <h2>No posters yet.</h2>
+          <p>Be the first to share something!</p>
+        </div>
+      ) : (
+        <PosterMasonry
+          posters={filteredPosters}
+          renderPoster={(poster, registerHeight) => (
+            <div key={poster.id} className="poster-card">
+              <img
+                src={poster.image_url}
+                alt={poster.title}
+                onClick={() => handlePosterClick(poster)}
+                onLoad={(e) =>
+                  registerHeight(poster.id, e.target.naturalWidth, e.target.naturalHeight)
+                }
+              />
+            </div>
+          )}
+        />
+      )
     ) : (
-      <ul className="poster-list">
-        {filteredPosters.length === 0 ? (
-          <div className="empty-state">
-            <h2>No posters yet.</h2>
-            <p>Be the first to share something!</p>
-          </div>
-        ) : (
-          filteredPosters.map((poster) => (
-            <li key={poster.id} className="poster-item" onClick={() => handlePosterClick(poster)}>
-              <div className="poster-item-content">
-                <img src={poster.image_url} width={50} height={50} alt={poster.title} className="poster-thumbnail" />
-                <div className="poster-details">
-                  {/* <h3>{poster.title}</h3>
-                  <p>{poster.description}</p>
-                  Location: {poster.location.join(', ')}  */}
-
-                  <h2>{poster.title}</h2>
-                  <p><strong>{poster.organizer ? 'Organizer:' : 'Uploaded by:'}</strong> {poster.organizer || uploaderName || 'Unknown'}</p>
-                  {!poster.repeating && poster.single_event_date && (
-                    <div className="align-icon">
-                    
-                    <img src='\time-icon.svg'></img>
-                    <span><strong></strong>    {poster.single_event_date}</span>
-                    </div>
-                  )}
-
-                  <div className="align-icon">
-                    
-                    <img src='\location-icon.svg'></img>
-                    <span><strong></strong> {Array.isArray(poster.location) ? poster.location.join(', ') : poster.location}</span>
-
-                  </div>
-
-                  <br/>
-
-                  <p>{poster.description}</p>
-                  
-                </div>
-              </div>
-            </li>
-          ))
-        )}
-      </ul>
+      filteredPosters.length === 0 ? (
+        <div className="empty-state">
+          <h2>No posters yet.</h2>
+          <p>Be the first to share something!</p>
+        </div>
+      ) : (
+        <ul className="poster-list">
+          {filteredPosters.map((poster) => (
+            <PosterListCard
+              key={poster.id}
+              poster={poster}
+              user={user}
+              likedPosters={likedPosters}
+              onOpen={handlePosterClick}
+              onLikeToggle={handleLikeToggle}
+              uploaderNames={uploaderNames}
+            />
+          ))}
+        </ul>
+      )
     )}
     
     {/* Modal handling */}

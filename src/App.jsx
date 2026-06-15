@@ -66,14 +66,28 @@ function App() {
 
   const activeCategory = location.pathname.substring(1) || 'All';
   const isProfilePage = location.pathname === '/profile' || location.pathname.startsWith('/edit-poster');
+  const isAuthPage = ['/authsignup', '/authlogin'].includes(location.pathname.toLowerCase());
+
+  useEffect(() => {
+    if (isAuthPage) {
+      document.body.classList.add('auth-layout');
+    } else {
+      document.body.classList.remove('auth-layout');
+    }
+
+    return () => document.body.classList.remove('auth-layout');
+  }, [isAuthPage]);
 
   return (
     <div>
-      <Navbar 
-        user={user} 
-        setSearchQuery={setSearchQuery}
-      />
-      <main className="container" style={{ paddingTop: isProfilePage ? '0' : '0' }}>
+      {!isAuthPage && (
+        <Navbar
+          user={user}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
+      )}
+      <main className={isAuthPage ? 'auth-layout-main' : 'main-layout'}>
         <Routes>
           <Route path="/" element={<MainPage
                                             user={user}
@@ -108,11 +122,13 @@ function App() {
           <Route path="/post" element={<PosterUpload user={user} />} />
           <Route path="/authsignup" element={<AuthSignUp />} />
           <Route path="/authlogin" element={<AuthLogin />} />
+          <Route path="/AuthSignUp" element={<AuthSignUp />} />
+          <Route path="/AuthLogin" element={<AuthLogin />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/edit-poster/:id" element={<EditPoster />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAuthPage && <Footer />}
     </div>
   );
 }

@@ -1,66 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { auth, db } from '../firebase';
+import React, { useState, useEffect, useRef } from 'react';
+import { auth, db, getUserDisplayName } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
-import './UserProfile.css'; // Import the new CSS file
-
-import Masonry from "react-masonry-css";
-
-const breakpointColumnsObj = {
-  default: 3,
-  1200: 3,
-  800: 2,
-  500: 1
-};
-
-const placeholders = Array.from({ length: breakpointColumnsObj.default });
+import EditProfileModal from './EditProfileModal';
+import PosterMasonry from './PosterMasonry';
+import './UserProfile.css';
 
 function UserProfile() {
   const [userPosts, setUserPosts] = useState([]);
   const [likedPostersData, setLikedPostersData] = useState([]);
   const [selectedPoster, setSelectedPoster] = useState(null);
   const [uploaderName, setUploaderName] = useState('');
-  const [uploaderNames, setUploaderNames] = useState({});
   const [userData, setUserData] = useState(null);
+  const [activeTab, setActiveTab] = useState('my-posters');
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const currentUser = auth.currentUser;
+  const navigate = useNavigate();
+  const pageWrapRef = useRef(null);
+  const profileInfoRef = useRef(null);
+
+  useEffect(() => {
+    const updateGradientHeight = () => {
+      const wrap = pageWrapRef.current;
+      const card = profileInfoRef.current;
+      if (!wrap || !card) return;
+
+      const wrapTop = wrap.getBoundingClientRect().top;
+      const cardRect = card.getBoundingClientRect();
+      const halfwayPoint = cardRect.top - wrapTop + cardRect.height / 2;
+      wrap.style.setProperty('--profile-header-bg-height', `${Math.max(Math.round(halfwayPoint), 0)}px`);
+    };
+
+    const scheduleUpdate = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(updateGradientHeight);
+      });
+    };
+
+    scheduleUpdate();
+
+    const resizeObserver = new ResizeObserver(scheduleUpdate);
+    if (profileInfoRef.current) {
+      resizeObserver.observe(profileInfoRef.current);
+    }
+
+    window.addEventListener('resize', scheduleUpdate);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [userData, currentUser]);
 
   useEffect(() => {
     if (currentUser) {
       const userDocRef = doc(db, 'users', currentUser.uid);
-      const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
-        if (doc.exists()) {
-          setUserData(doc.data());
+      const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
+        if (userDoc.exists()) {
+          setUserData(userDoc.data());
         }
       });
 
       const q = query(collection(db, 'posters'), where('uploaded_by', '==', currentUser.uid));
       const unsubscribePosts = onSnapshot(q, async (snapshot) => {
-        const postsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const postsData = snapshot.docs.map((posterDoc) => ({
+          id: posterDoc.id,
+          ...posterDoc.data(),
         }));
         setUserPosts(postsData);
-
-        const uploaderIds = [...new Set(postsData.map(p => p.uploaded_by))];
-        const names = {};
-        for (const poster of postsData) {
-          if (poster.organizer) {
-            names[poster.id] = poster.organizer;
-          } else if (poster.uploaded_by && !names[poster.uploaded_by]) {
-            const userDoc = await getDoc(doc(db, 'users', poster.uploaded_by));
-            if (userDoc.exists()) {
-              names[poster.uploaded_by] = `${userDoc.data().firstName} ${userDoc.data().lastName}`;
-            }
-          }
-        }
-        setUploaderNames(names);
       });
 
       const likedRef = collection(db, `users/${currentUser.uid}/likedPosters`);
       const unsubscribeLiked = onSnapshot(likedRef, async (snapshot) => {
-        const likedIds = snapshot.docs.map(doc => doc.id);
+        const likedIds = snapshot.docs.map((likedDoc) => likedDoc.id);
         const fetchedLikedPosters = [];
         for (const id of likedIds) {
           const posterDoc = await getDoc(doc(db, 'posters', id));
@@ -69,20 +82,6 @@ function UserProfile() {
           }
         }
         setLikedPostersData(fetchedLikedPosters);
-
-        const uploaderIds = [...new Set(fetchedLikedPosters.map(p => p.uploaded_by))];
-        const names = {};
-        for (const poster of fetchedLikedPosters) {
-          if (poster.organizer) {
-            names[poster.id] = poster.organizer;
-          } else if (poster.uploaded_by && !names[poster.uploaded_by]) {
-            const userDoc = await getDoc(doc(db, 'users', poster.uploaded_by));
-            if (userDoc.exists()) {
-              names[poster.uploaded_by] = `${userDoc.data().firstName} ${userDoc.data().lastName}`;
-            }
-          }
-        }
-        setUploaderNames(prevNames => ({ ...prevNames, ...names }));
       });
 
       return () => {
@@ -98,8 +97,7 @@ function UserProfile() {
       const fetchUploaderName = async () => {
         const userDoc = await getDoc(doc(db, 'users', selectedPoster.uploaded_by));
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUploaderName(`${userData.firstName} ${userData.lastName}`);
+          setUploaderName(getUserDisplayName(userDoc.data()));
         } else {
           setUploaderName('Unknown');
         }
@@ -112,7 +110,7 @@ function UserProfile() {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error('Error signing out:', error);
     }
   };
 
@@ -122,13 +120,11 @@ function UserProfile() {
         await deleteDoc(doc(db, 'posters', postId));
         alert('Post deleted successfully!');
       } catch (error) {
-        console.error("Error deleting post:", error);
+        console.error('Error deleting post:', error);
         alert('Error deleting post.');
       }
     }
   };
-
-  const navigate = useNavigate();
 
   const handleEditPost = (postId) => {
     navigate(`/edit-poster/${postId}`);
@@ -148,7 +144,7 @@ function UserProfile() {
       return;
     }
     const likedRef = doc(db, `users/${currentUser.uid}/likedPosters`, posterId);
-    const isLiked = likedPostersData.some(poster => poster.id === posterId);
+    const isLiked = likedPostersData.some((poster) => poster.id === posterId);
 
     try {
       if (isLiked) {
@@ -162,183 +158,165 @@ function UserProfile() {
     }
   };
 
+  const renderPosterCard = (poster, registerHeight, showActions = false) => (
+    <div
+      key={poster.id}
+      className={`poster-card ${showActions ? 'profile-poster-card' : ''}`}
+    >
+      <img
+        src={poster.image_url}
+        alt={poster.title}
+        onClick={() => handlePosterClick(poster)}
+        onLoad={(e) =>
+          registerHeight(poster.id, e.target.naturalWidth, e.target.naturalHeight)
+        }
+      />
+      {showActions && (
+        <div className="profile-poster-actions">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditPost(poster.id);
+            }}
+            className="btn"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeletePost(poster.id);
+            }}
+            className="btn btn-delete"
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   if (!currentUser) {
     return (
-      <div className="container">
+      <div className="page-content profile-page">
         <h2>Please sign in to view your profile.</h2>
       </div>
     );
   }
 
+  const activePosters = activeTab === 'my-posters' ? userPosts : likedPostersData;
+  const showActions = activeTab === 'my-posters';
+  const profilePhotoSrc = userData?.profilePhotoUrl || '/tester-pfp-icon.svg';
+
   return (
-    <div className="profile-container">
-      <div className="profile-info">
-        <h2>User Profile</h2>
-        {userData && (
-          <>
-            <p><strong>Name:</strong> {userData.firstName} {userData.lastName}</p>
-            <p><strong>Email:</strong> {currentUser.email}</p>
-            {userData.organization && <p><strong>Organization:</strong> {userData.organization}</p>}
-          </>
-        )}
-        <button onClick={handleSignOut} className="btn">Sign Out</button>
+    <div className="profile-page-wrap" ref={pageWrapRef}>
+      <div className="profile-header-bg" aria-hidden="true">
+        <div className="profile-header-bg__blob profile-header-bg__blob--1" />
+        <div className="profile-header-bg__blob profile-header-bg__blob--2" />
+        <div className="profile-header-bg__blob profile-header-bg__blob--3" />
       </div>
 
-      <div className="profile-posts">
-        <h3>Your Posts</h3>
-        {userPosts.length === 0 ? (
-          <p>You haven't posted anything yet.</p>
-        ) : (
-          <div className="poster-grid">
-            {/* keeping old code for reference for now */}
-            {/* {userPosts.map((poster) => (
-              <div key={poster.id} className="poster-card" onClick={() => handlePosterClick(poster)}>
-                <img src={poster.image_url} alt={poster.title} />
-                <div className="poster-card-content">
-                  <h4>{poster.title}</h4>
-                  <p><strong>{poster.organizer ? 'Organizer:' : 'Posted by:'}</strong> {poster.organizer || uploaderNames[poster.uploaded_by] || 'Unknown'}</p>
-                  <p>{poster.description}</p>
-                  <button onClick={(e) => {e.stopPropagation(); handleEditPost(poster.id)}} className="btn">Edit</button>
-                  <button onClick={(e) => {e.stopPropagation(); handleDeletePost(poster.id)}} className="btn" style={{ marginLeft: '10px', backgroundColor: '#dc3545' }}>Delete</button>
-                </div>
-              </div>
-            ))} */}
+      <div className="page-content profile-page">
+        <div className="profile-info-card" ref={profileInfoRef}>
+          <div className="profile-info-inner">
+            <div className="profile-icon">
+              <img
+                src={profilePhotoSrc}
+                alt="Profile"
+                className={userData?.profilePhotoUrl ? 'profile-icon__photo--custom' : ''}
+              />
+            </div>
 
-            <Masonry
-              breakpointCols={breakpointColumnsObj}
-              className="poster-masonry"
-              columnClassName="poster-masonry-column"
-            >
-              {userPosts.map((poster) => (
-                <div
-                  key={poster.id}
-                  className="poster-card"
-                  onClick={() => handlePosterClick(poster)}
+            <div className="profile-text">
+              <h2>{getUserDisplayName(userData) || 'User Profile'}</h2>
+              {userData?.description && (
+                <p className="profile-description">{userData.description}</p>
+              )}
+              {userData && (
+                <>
+                  <p><strong>Email:</strong> {currentUser.email}</p>
+                  {userData.organization && (
+                    <p><strong>Organization:</strong> {userData.organization}</p>
+                  )}
+                </>
+              )}
+              <div className="profile-actions">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="profile-edit-btn"
                 >
-                  <img src={poster.image_url} alt={poster.title} />
-                  <div className="poster-card-content-wrapper">
-
-                  
-
-                    <div className="poster-card-content">
-                      <h4>{poster.title}</h4>
-
-                      <p>
-                        <strong>{poster.organizer ? "Organizer:" : "Posted by:"}</strong>{" "}
-                        {poster.organizer ||
-                          uploaderNames[poster.uploaded_by] ||
-                          "Unknown"}
-                      </p>
-
-                      <p>{poster.description}</p>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditPost(poster.id);
-                        }}
-                        className="btn"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePost(poster.id);
-                        }}
-                        className="btn"
-                        style={{ marginLeft: "10px", backgroundColor: "#dc3545" }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-                {placeholders.map((_, i) => (
-                    <div key={`ph-${i}`} className="poster-placeholder"></div>
-                  ))} 
-            </Masonry>
-
-
+                  Edit profile
+                </button>
+                <button type="button" onClick={handleSignOut} className="profile-sign-out-btn">
+                  Sign Out
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
 
+        <div className="profile-tabs" role="tablist" aria-label="Profile poster views">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'my-posters'}
+            className={`profile-tab ${activeTab === 'my-posters' ? 'active' : ''}`}
+            onClick={() => setActiveTab('my-posters')}
+          >
+            My Posters
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'liked'}
+            className={`profile-tab ${activeTab === 'liked' ? 'active' : ''}`}
+            onClick={() => setActiveTab('liked')}
+          >
+            Liked Posters
+          </button>
+        </div>
 
+        <div className="poster-list-wrapper profile-posts-wrapper">
+          {activePosters.length === 0 ? (
+            <div className="profile-empty-state">
+              <p>
+                {activeTab === 'my-posters'
+                  ? "You haven't posted anything yet."
+                  : "You haven't liked any posters yet."}
+              </p>
+            </div>
+          ) : (
+            <PosterMasonry
+              posters={activePosters}
+              actionExtraWeight={showActions ? 0.35 : 0}
+              renderPoster={(poster, registerHeight) =>
+                renderPosterCard(poster, registerHeight, showActions)
+              }
+            />
+          )}
+        </div>
 
-
+        {selectedPoster && (
+          <Modal
+            poster={selectedPoster}
+            onClose={handleCloseModal}
+            user={currentUser}
+            likedPosters={likedPostersData.map((p) => p.id)}
+            handleLikeToggle={handleLikeToggle}
+            uploaderName={uploaderName}
+          />
         )}
 
-        <h3>Liked Posters</h3>
-        {likedPostersData.length === 0 ? (
-          <p>You haven't liked any posters yet.</p>
-        ) : (
-          <div className="poster-grid">
-            {/* {likedPostersData.map((poster) => (
-              <div key={poster.id} className="poster-card" onClick={() => handlePosterClick(poster)}>
-                <img src={poster.image_url} alt={poster.title} />
-                <div className="poster-card-content">
-                  <h4>{poster.title}</h4>
-                  <p><strong>{poster.organizer ? 'Organizer:' : 'Posted by:'}</strong> {poster.organizer || uploaderNames[poster.uploaded_by] || 'Unknown'}</p>
-                  <p>{poster.description}</p>
-                </div>
-              </div>
-            ))} */}
-
-
-            <Masonry
-              breakpointCols={breakpointColumnsObj}
-              className="poster-masonry"
-              columnClassName="poster-masonry-column"
-            >
-              {likedPostersData.map((poster) => (
-                <div
-                  key={poster.id}
-                  className="poster-card"
-                  onClick={() => handlePosterClick(poster)}
-                >
-                  <img src={poster.image_url} alt={poster.title} />
-
-                  <div className="poster-card-content-wrapper">
-
-                  
-                    <div className="poster-card-content">
-                      <h4>{poster.title}</h4>
-
-                      <p>
-                        <strong>{poster.organizer ? "Organizer:" : "Posted by:"}</strong>{" "}
-                        {poster.organizer ||
-                          uploaderNames[poster.uploaded_by] ||
-                          "Unknown"}
-                      </p>
-
-                      <p>{poster.description}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {placeholders.map((_, i) => (
-                  <div key={`ph-${i}`} className="poster-placeholder"></div>
-                ))}
-
-
-            </Masonry>
-          </div>
+        {isEditProfileOpen && (
+          <EditProfileModal
+            userData={userData}
+            onClose={() => setIsEditProfileOpen(false)}
+          />
         )}
       </div>
-
-      {selectedPoster && (
-        <Modal 
-          poster={selectedPoster} 
-          onClose={handleCloseModal} 
-          user={currentUser}
-          likedPosters={likedPostersData.map(p => p.id)} // Pass only IDs for liked status check
-          handleLikeToggle={handleLikeToggle}
-          uploaderName={uploaderName}
-        />
-      )}
     </div>
   );
 }
