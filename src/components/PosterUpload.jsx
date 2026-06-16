@@ -503,7 +503,7 @@ function PosterUpload() {
                                 onChange={(e) => setSingleEventDate(e.target.value)}
                                 aria-label="Event date"
                               />
-                              <p className="poster-upload-schedule-compact__hint">Exact time optional</p>
+                              <p className="poster-upload-schedule-compact__hint"></p>
                               <div className="poster-upload-schedule-compact__times">
                                 <input
                                   id="poster-event-time-start"

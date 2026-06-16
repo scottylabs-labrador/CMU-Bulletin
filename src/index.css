@@ -254,6 +254,13 @@ input.filter-control.filter-control--date:focus {
 }
 
 input.filter-control.filter-control--date::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
   cursor: pointer;
 }
 
@@ -262,6 +269,7 @@ input.filter-control.filter-control--date::-webkit-calendar-picker-indicator {
   background: #000;
   color: #fff;
   border-color: #000;
+  border-radius: 999px
 }
 
 button.filter-control.filter-control--view:hover {
@@ -321,36 +329,31 @@ button.filter-reset-link:hover {
   width: var(--size);
   height: var(--size);
   padding: 0;
-  border: 1px solid #E6E6E6;
-  border-radius: 50%;
-  background: #fff;
+  border: none;
+  background: transparent;
   color: #4A5662;
   cursor: pointer;
   text-decoration: none !important;
-  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 .nav-icon-btn img {
   width: 18px;
   height: 18px;
   display: block;
+  transition: opacity 0.2s;
+}
+
+.nav-icon-btn:hover img {
+  opacity: 0.7;
 }
 
 .nav-icon-btn--profile img {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
+  object-fit: cover;
 }
 
-.nav-icon-btn:hover {
-  background: #f3f5f8;
-  border-color: #D6D6D6;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  color: #4A5662;
-  text-decoration: none !important;
-}
-
-header .nav-icon-btn:hover,
 header .clearbtn:hover,
 header .nav-create-btn:hover,
 header .nav-auth-btn:hover {
@@ -514,7 +517,7 @@ button:focus-visible,
   font-size: 14px;
 
   border: 1px solid var(--Stroke-Neutral-1, #E6E6E6);
-  border-radius: 10px;
+  border-radius: 999px;
   text-decoration: none;
   
 }
@@ -882,6 +885,20 @@ input:focus, textarea:focus {
   height: auto;
 }
 
+.feature-hero--custom {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  background: #f3f5f8;
+  line-height: 0;
+}
+
+.feature-hero__banner-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 @media (max-width: 768px) {
   .feature-hero {
     height: auto;
@@ -901,6 +918,11 @@ input:focus, textarea:focus {
     width: 100%;
     max-width: 260px;
     align-self: center;
+  }
+
+  .feature-hero--custom {
+    min-height: 0;
+    max-height: none;
   }
 }
 

@@ -213,7 +213,7 @@ const getPosterDateTime = (poster) => {
   );
 };
 
-function PosterListCard({ poster, user, likedPosters, onOpen, onLikeToggle, uploaderNames }) {
+function PosterListCard({ poster, user, likedPosters, onOpen, onLikeToggle, uploaderNames, renderActions }) {
   const categoryPills = toTagList(poster.category).map((cat) => ({
     key: `category-${cat}`,
     label: formatTagLabel(cat),
@@ -228,7 +228,7 @@ function PosterListCard({ poster, user, likedPosters, onOpen, onLikeToggle, uplo
   const locationText = formatLocation(poster.location);
 
   return (
-    <li>
+    <li className={renderActions ? 'poster-list-item--with-actions' : undefined}>
       <article
         className="poster-list-card"
         onClick={() => onOpen(poster)}
@@ -308,6 +308,11 @@ function PosterListCard({ poster, user, likedPosters, onOpen, onLikeToggle, uplo
           )}
         </div>
       </article>
+      {renderActions && (
+        <div className="profile-poster-actions profile-poster-actions--list">
+          {renderActions(poster)}
+        </div>
+      )}
     </li>
   );
 }
@@ -574,4 +579,5 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
 }
 
 // Export component
+export { PosterListCard };
 export default PosterList;

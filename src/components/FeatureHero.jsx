@@ -1,4 +1,5 @@
 import React from 'react';
+import { FEATURE_HERO_IMAGE, FEATURE_HERO_IMAGE_ALT } from '../config/featureHero';
 
 const categoryHeadlines = {
   All: 'Discover what\u2019s happening on campus',
@@ -11,6 +12,20 @@ const categoryHeadlines = {
 };
 
 function FeatureHero({ activeCategory = 'All' }) {
+  const hasCustomImage = Boolean(FEATURE_HERO_IMAGE);
+
+  if (hasCustomImage) {
+    return (
+      <section className="feature-hero feature-hero--custom" aria-label={FEATURE_HERO_IMAGE_ALT}>
+        <img
+          src={FEATURE_HERO_IMAGE}
+          alt={FEATURE_HERO_IMAGE_ALT}
+          className="feature-hero__banner-image"
+        />
+      </section>
+    );
+  }
+
   const headline = categoryHeadlines[activeCategory] || categoryHeadlines.All;
   const label = activeCategory === 'All' ? 'CMU Bulletin' : activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1);
 
