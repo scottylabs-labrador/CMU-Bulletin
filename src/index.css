@@ -529,7 +529,7 @@ button:focus-visible,
   text-decoration: none !important;
 }
 
-button:hover:not(.nav-icon-btn):not(.clearbtn):not(.profile-tab):not(.profile-sign-out-btn):not(.profile-edit-btn):not(.profile-edit-form__cancel):not(.profile-edit-form__save):not(.profile-edit-modal__close):not(.profile-edit-photo__preview-wrap):not(.profile-edit-photo__remove):not(.filter-reset-link):not(.filter-control--view):not(.auth-submit-btn):not(.poster-upload-submit):not(.poster-upload-cancel):not(.modal-close-btn):not(.category-bar-arrow):not(.modal-heart-overlay),
+button:hover:not(.nav-icon-btn):not(.clearbtn):not(.profile-tab):not(.profile-sign-out-btn):not(.profile-edit-btn):not(.profile-edit-form__cancel):not(.profile-edit-form__save):not(.profile-edit-modal__close):not(.profile-edit-photo__preview-wrap):not(.profile-edit-photo__remove):not(.filter-reset-link):not(.filter-control--view):not(.auth-submit-btn):not(.poster-upload-submit):not(.poster-upload-cancel):not(.modal-close-btn):not(.modal-share-btn):not(.category-bar-arrow):not(.category-bar__category):not(.modal-heart-overlay),
 .btn:hover:not(.btn-delete) {
   background-color: #f3f5f8;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
@@ -1154,31 +1154,79 @@ input:focus, textarea:focus {
   position: relative;
 }
 
-.modal-close-btn {
+.modal-header-actions {
   position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  z-index: 200;
+}
+
+.modal-share-btn-wrap {
+  position: relative;
+}
+
+.modal-share-toast {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  white-space: nowrap;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: #f3f5f8;
+  border: 1px solid #E6E6E6;
+  color: #4A5662;
+  font-family: 'Satoshi-Medium', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: modal-share-toast-in 0.2s ease-out;
+  pointer-events: none;
+}
+
+@keyframes modal-share-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-share-btn,
+.modal-close-btn {
+  position: static;
   height: 50px;
   width: 50px;
   border-radius: 15px;
-  
-  display: inline-flex;       
-  align-items: center;      
-  justify-content: center; 
 
-  top: 10px;
-  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   background: none;
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--text-color);
-  z-index: 200;  
 }
 
 .modal-close-btn img {
   width: 30px;
   height: 30px;
-  pointer-events: none; 
-  
+  pointer-events: none;
+}
+
+.modal-share-btn img {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
 }
 
 .modal-body {

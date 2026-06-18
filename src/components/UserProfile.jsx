@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { auth, db, getUserDisplayName } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -6,11 +6,13 @@ import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import EditProfileModal from './EditProfileModal';
 import PosterMasonry from './PosterMasonry';
+import PosterFilters from './PosterFilters';
 import { PosterListCard } from './PosterList';
+import { filterPosters } from '../utils/filterPosters';
 import './PosterList.css';
 import './UserProfile.css';
 
-function UserProfile() {
+function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
   const [userPosts, setUserPosts] = useState([]);
   const [likedPostersData, setLikedPostersData] = useState([]);
   const [selectedPoster, setSelectedPoster] = useState(null);
@@ -19,6 +21,9 @@ function UserProfile() {
   const [activeTab, setActiveTab] = useState('my-posters');
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
+  const [filterDate, setFilterDate] = useState('');
+  const [filterLocations, setFilterLocations] = useState([]);
+  const [filterTags, setFilterTags] = useState([]);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
   const pageWrapRef = useRef(null);
@@ -214,6 +219,16 @@ function UserProfile() {
   }
 
   const activePosters = activeTab === 'my-posters' ? userPosts : likedPostersData;
+  const filteredPosters = useMemo(
+    () =>
+      filterPosters(activePosters, {
+        filterDate,
+        filterLocations,
+        filterTags,
+        searchQuery: searchQuery || '',
+      }),
+    [activePosters, filterDate, filterLocations, filterTags, searchQuery]
+  );
   const showActions = activeTab === 'my-posters';
   const profilePhotoSrc = userData?.profilePhotoUrl || '/tester-pfp-icon.svg';
   const likedPosterIds = likedPostersData.map((poster) => poster.id);
@@ -287,13 +302,21 @@ function UserProfile() {
             </button>
           </div>
 
-          <button
-            type="button"
-            className="filter-control filter-control--view"
-            onClick={toggleViewMode}
-          >
-            {viewMode === 'grid' ? 'List View' : 'Grid View'}
-          </button>
+          <PosterFilters
+            variant="profile"
+            filterDate={filterDate}
+            setFilterDate={setFilterDate}
+            filterLocations={filterLocations}
+            setFilterLocations={setFilterLocations}
+            filterTags={filterTags}
+            setFilterTags={setFilterTags}
+            availableTags={availableTags}
+            toggleViewMode={toggleViewMode}
+            viewMode={viewMode}
+            setSearchQuery={setSearchQuery}
+            onResetFilters={() => {}}
+            showCategoryBar={false}
+          />
         </div>
 
         <div className="poster-list-wrapper profile-posts-wrapper">
@@ -305,9 +328,14 @@ function UserProfile() {
                   : "You haven't liked any posters yet."}
               </p>
             </div>
+          ) : filteredPosters.length === 0 ? (
+            <div className="empty-state">
+              <h2>No posters match your filters.</h2>
+              <p>Try adjusting your filters or search.</p>
+            </div>
           ) : viewMode === 'grid' ? (
             <PosterMasonry
-              posters={activePosters}
+              posters={filteredPosters}
               actionExtraWeight={showActions ? 0.35 : 0}
               renderPoster={(poster, registerHeight) =>
                 renderPosterCard(poster, registerHeight, showActions)
@@ -315,7 +343,7 @@ function UserProfile() {
             />
           ) : (
             <ul className="poster-list">
-              {activePosters.map((poster) => (
+              {filteredPosters.map((poster) => (
                 <PosterListCard
                   key={poster.id}
                   poster={poster}

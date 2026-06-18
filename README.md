@@ -2,7 +2,7 @@
 
 Your one-stop shop for everything happening at Carnegie Mellon. Never miss an event on campus again.
 
-**Live at [cmubulletin.com](https://cmubulletin.com)** (Once Deployed)
+**Live at [cmubulletin.com](https://cmubulletin.com)** 
 
 ---
 

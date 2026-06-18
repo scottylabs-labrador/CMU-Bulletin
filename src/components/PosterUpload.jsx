@@ -431,18 +431,7 @@ function PosterUpload() {
                   </>
                 ) : (
                   <>
-                    <svg
-                      className="poster-upload-dropzone__graphic"
-                      viewBox="0 0 72 72"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                    >
-                      <rect x="8" y="14" width="56" height="44" rx="8" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="26" cy="32" r="6" stroke="currentColor" strokeWidth="2" />
-                      <path d="M8 48L24 34L36 44L52 28L64 38" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M36 58V46M30 52L36 58L42 52" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <img src="/upload.svg" alt="" aria-hidden="true" />
                     <p className="poster-upload-dropzone__title">Upload image</p>
                     <p className="poster-upload-dropzone__hint">
                       Drag and drop an image here, or click to browse

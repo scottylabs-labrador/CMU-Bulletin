@@ -72,7 +72,12 @@ function PosterFilters({
   toggleViewMode,
   viewMode,
   activeCategory,
+  setActiveCategory,
   setSearchQuery,
+  onResetFilters,
+  flavorText = "Discover what's going on!",
+  showCategoryBar = true,
+  variant,
 }) {
   const navigate = useNavigate();
   const categoryScrollRef = useRef(null);
@@ -122,13 +127,19 @@ function PosterFilters({
     setFilterLocations([]);
     setFilterTags([]);
     setSearchQuery('');
-    navigate('/');
+    if (onResetFilters) {
+      onResetFilters();
+    } else {
+      navigate('/');
+    }
   };
 
   return (
     <>
-      <div className="filter-bar">
-        <div className="navbar-flavor-text">Discover what’s going on!</div>
+      <div className={`filter-bar${variant === 'profile' ? ' filter-bar--profile' : ''}`}>
+        {variant !== 'profile' && (
+          <div className="navbar-flavor-text">{flavorText}</div>
+        )}
 
         <div className="filter-bar__controls">
           <button
@@ -180,6 +191,7 @@ function PosterFilters({
         </div>
       </div>
 
+      {showCategoryBar && (
       <div className="category-bar-wrap">
         <CategoryScrollArrow
           direction="left"
@@ -195,18 +207,34 @@ function PosterFilters({
         >
           {POSTER_CATEGORIES.map((cat) => (
             <div className="event-category" key={cat}>
-              <Link
-                to={cat === 'All' ? '/' : `/${cat}`}
-                className={activeCategory === cat ? 'active' : ''}
-              >
-                <div className="icon-wrap">
-                  <img
-                    src={`/${cat.toLowerCase()}.svg`}
-                    alt={`${cat.toLowerCase()} icon`}
-                  />
-                </div>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </Link>
+              {setActiveCategory ? (
+                <button
+                  type="button"
+                  className={`category-bar__category${activeCategory === cat ? ' active' : ''}`}
+                  onClick={() => setActiveCategory(cat)}
+                >
+                  <div className="icon-wrap">
+                    <img
+                      src={`/${cat.toLowerCase()}.svg`}
+                      alt={`${cat.toLowerCase()} icon`}
+                    />
+                  </div>
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </button>
+              ) : (
+                <Link
+                  to={cat === 'All' ? '/' : `/${cat}`}
+                  className={activeCategory === cat ? 'active' : ''}
+                >
+                  <div className="icon-wrap">
+                    <img
+                      src={`/${cat.toLowerCase()}.svg`}
+                      alt={`${cat.toLowerCase()} icon`}
+                    />
+                  </div>
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -218,6 +246,7 @@ function PosterFilters({
           label="Scroll categories right"
         />
       </div>
+      )}
     </>
   );
 }

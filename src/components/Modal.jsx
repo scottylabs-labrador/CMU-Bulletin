@@ -1,13 +1,40 @@
 // src/components/Modal.jsx
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import HeartIcon from './HeartIcon';
 import { formatEventDateTime } from '../utils/eventDateTime';
 
 function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploaderName }) {
+  const [copied, setCopied] = useState(false);
+  const copiedTimeoutRef = useRef(null);
+
+  useEffect(() => () => {
+    if (copiedTimeoutRef.current) {
+      window.clearTimeout(copiedTimeoutRef.current);
+    }
+  }, []);
+
   if (!poster) return null;
 
   const googleCalUrl = poster.googleCalUrl;
+
+  const getPosterShareUrl = () => `${window.location.origin}/poster/${poster.id}`;
+
+  const handleShare = async (event) => {
+    event.stopPropagation();
+    const shareUrl = getPosterShareUrl();
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      if (copiedTimeoutRef.current) {
+        window.clearTimeout(copiedTimeoutRef.current);
+      }
+      copiedTimeoutRef.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
 
   const toTagList = (value) => {
     if (!value) return [];
@@ -30,10 +57,26 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}> {/* Prevent clicks inside from closing modal */}
-        {/* <button className="modal-close-btn" onClick={onClose}>&times;</button> */}
-        <button onClick={onClose} className="modal-close-btn">
-          <img src="/x.svg"  alt="close button"  />
-        </button>
+        <div className="modal-header-actions">
+          <div className="modal-share-btn-wrap">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="modal-share-btn"
+              aria-label={copied ? 'Link copied' : 'Copy link to poster'}
+            >
+              <img src="/share-icon.svg" alt="" />
+            </button>
+            {copied && (
+              <div className="modal-share-toast" role="status" aria-live="polite">
+                Link copied!
+              </div>
+            )}
+          </div>
+          <button type="button" onClick={onClose} className="modal-close-btn" aria-label="Close">
+            <img src="/x.svg" alt="" />
+          </button>
+        </div>
         <div className="modal-body">
           <div className="modal-image-container">
             {user && (

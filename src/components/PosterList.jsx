@@ -1,6 +1,6 @@
 // Import React hooks and router utilities
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 
 // Import Firestore SDK functions and database instance
 import { db, getUserDisplayName } from '../firebase';
@@ -13,98 +13,8 @@ import { formatEventDateTime } from '../utils/eventDateTime';
 
 // Import Masonry for column layout
 import PosterMasonry from './PosterMasonry';
-import { normalizePosterLocations, posterHasCustomLocation } from './PosterFilters';
+import { filterPosters, findNextOccurrence } from '../utils/filterPosters';
 import './PosterList.css';
-
-/*================================================================================
-Helper Function #1: Check if a recurring event occurs on a given date
-================================================================================*/
-const isRecurringEventOnDate = (poster, checkDateString) => {
-  // If it's not a repeating event or missing the recurrence start, it can't recur
-  if (!poster.repeating || !poster.next_occurring_date) {
-    return false;
-  }
-
-  // Construct date objects safely by adding T00:00:00 to avoid timezone errors
-  const checkDate = new Date(`${checkDateString}T00:00:00`);
-  const startDate = new Date(`${poster.next_occurring_date}T00:00:00`);
-
-  // Event can't occur before its start date
-  if (checkDate < startDate) {
-    return false;
-  }
-
-  const frequency = poster.frequency; // e.g. "daily", "weekly", etc.
-  const daysOfWeek = poster.days_of_week || []; // e.g. ['Monday', 'Wednesday']
-  const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const checkDayName = dayMap[checkDate.getDay()]; // Convert date to weekday string
-
-  // If event specifies which weekdays it happens on, ensure this day is one of them
-  if (daysOfWeek.length > 0 && !daysOfWeek.includes(checkDayName)) {
-    return false;
-  }
-
-  // Determine recurrence by frequency type
-  switch (frequency) {
-    case 'daily':
-      return true; // Happens every day
-
-    case 'weekly':
-      return true; // Weekly recurrence, day-of-week check already handled
-
-    case 'bi-weekly': {
-      // Compute how many weeks apart the dates are and ensure it's an even multiple of 2
-      const weekStartForStartDate = new Date(startDate.getTime());
-      weekStartForStartDate.setDate(startDate.getDate() - startDate.getDay());
-      weekStartForStartDate.setHours(0, 0, 0, 0);
-
-      const weekStartForCheckDate = new Date(checkDate.getTime());
-      weekStartForCheckDate.setDate(checkDate.getDate() - checkDate.getDay());
-      weekStartForCheckDate.setHours(0, 0, 0, 0);
-
-      const weekDiff = Math.round((weekStartForCheckDate - weekStartForStartDate) / (1000 * 60 * 60 * 24 * 7));
-
-      return weekDiff % 2 === 0; // Occurs every other week
-    }
-
-    case 'monthly':
-      // Occurs on the same date of the month (e.g. every 15th)
-      return startDate.getDate() === checkDate.getDate();
-
-    default:
-      return false;
-  }
-};
-
-// =====================================================
-// Helper Function #2: Find next occurrence of a recurring event
-// =====================================================
-const findNextOccurrence = (poster, fromDateString) => {
-  if (!poster.repeating || !poster.next_occurring_date) {
-    return null;
-  }
-
-  const fromDate = new Date(`${fromDateString}T00:00:00`);
-  const startDate = new Date(`${poster.next_occurring_date}T00:00:00`);
-
-  // Start checking from the later of fromDate or event start
-  let checkDate = new Date(Math.max(fromDate.getTime(), startDate.getTime()));
-
-  // Limit search to within 1 year (avoid infinite loops)
-  const searchLimit = new Date(fromDate);
-  searchLimit.setFullYear(searchLimit.getFullYear() + 1);
-
-  while (checkDate <= searchLimit) {
-    const checkDateFormatted = checkDate.toISOString().split('T')[0];
-    if (isRecurringEventOnDate(poster, checkDateFormatted)) {
-      return checkDateFormatted;
-    }
-    // Increment day by 1 and continue checking
-    checkDate.setDate(checkDate.getDate() + 1);
-  }
-
-  return null; // No next date found within limit
-};
 
 /**********************************************************************************/
 
@@ -331,7 +241,32 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   const [selectedPoster, setSelectedPoster] = useState(null); // Poster currently shown in modal
   const [likedPosters, setLikedPosters] = useState([]);       // IDs of posters liked by user
   const [uploaderNames, setUploaderNames] = useState({});     // Map of poster uploader IDs → names
-  const { category } = useParams(); // Category from URL (e.g. "/category/music")
+  const { category, id: sharePosterId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isShareRoute = location.pathname.startsWith('/poster/');
+  const filterCategory = isShareRoute ? 'All' : (category || 'All');
+
+  useEffect(() => {
+    if (!isShareRoute || !sharePosterId) return undefined;
+
+    const loadSharedPoster = async () => {
+      const docSnap = await getDoc(doc(db, 'posters', sharePosterId));
+      if (!docSnap.exists()) {
+        navigate('/', { replace: true });
+        return;
+      }
+
+      const poster = {
+        id: docSnap.id,
+        ...docSnap.data(),
+      };
+      poster.googleCalUrl = createGoogleCalendarLink(poster);
+      setSelectedPoster(poster);
+    };
+
+    loadSharedPoster();
+  }, [isShareRoute, sharePosterId, navigate]);
 
   // --------------------------------------------
   // Fetch posters in real time from Firestore
@@ -429,76 +364,16 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   // Filter posters by date, category, tags, etc.
   // --------------------------------------------
   useEffect(() => {
-    const filterCategory = category || 'All';
-    let currentPosters = allPosters;
-
-    // Exclude past events unless a specific filterDate is selected
-    if (!filterDate) {
-      const today = new Date().toISOString().split('T')[0];
-      currentPosters = allPosters.filter(poster => {
-        if (poster.repeating) {
-          return findNextOccurrence(poster, today) !== null;
-        } else {
-          return poster.single_event_date >= today;
-        }
-      });
-    }
-
-    // Filter by category
-    if (filterCategory !== 'All') {
-      currentPosters = currentPosters.filter(poster =>
-        poster.category && poster.category.includes(filterCategory)
-      );
-    }
-
-    // Filter by date (if selected)
-    if (filterDate) {
-      currentPosters = currentPosters.filter(poster => {
-        if (poster.repeating) {
-          return isRecurringEventOnDate(poster, filterDate);
-        } else {
-          return poster.single_event_date === filterDate;
-        }
-        
-      });
-    }
-
-    // Filter by search query (title or description)
-    if (searchQuery) {
-      currentPosters = currentPosters.filter(poster =>
-        poster.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        poster.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Filter by selected locations
-    if (filterLocations.length > 0) {
-      currentPosters = currentPosters.filter((poster) => {
-        const posterLocs = normalizePosterLocations(poster.location).map((loc) => loc.toLowerCase());
-
-        return filterLocations.some((location) => {
-          if (location === 'Other') {
-            return posterHasCustomLocation(poster);
-          }
-          return posterLocs.includes(location.toLowerCase());
-        });
-      });
-    }
-
-    // Filter by selected tags
-    if (filterTags.length > 0) {
-      currentPosters = currentPosters.filter(poster =>
-        filterTags.some(tag =>
-          poster.tags.map(t => t.toLowerCase()).includes(tag.toLowerCase())
-        )
-      );
-    }
-
-    console.log("DEBUG: Final Filtered Poster List:", currentPosters);
-
-    // Apply final filtered set
-    setFilteredPosters(currentPosters);
-  }, [category, allPosters, filterDate, searchQuery, filterLocations, filterTags]);
+    setFilteredPosters(
+      filterPosters(allPosters, {
+        filterCategory,
+        filterDate,
+        filterLocations,
+        filterTags,
+        searchQuery,
+      })
+    );
+  }, [filterCategory, allPosters, filterDate, searchQuery, filterLocations, filterTags]);
 
   // --------------------------------------------
   // Modal open/close handlers
@@ -509,6 +384,9 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
 
   const handleCloseModal = () => {
     setSelectedPoster(null);
+    if (isShareRoute) {
+      navigate('/', { replace: true });
+    }
   };
 
   // --------------------------------------------
