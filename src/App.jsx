@@ -64,7 +64,10 @@ function App() {
     };
   }, []);
 
-  const activeCategory = location.pathname.substring(1) || 'All';
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const activeCategory = pathSegments[0] === 'poster' || pathSegments.length === 0
+    ? 'All'
+    : pathSegments[0];
   const isProfilePage = location.pathname === '/profile' || location.pathname.startsWith('/edit-poster');
   const isAuthPage = ['/authsignup', '/authlogin'].includes(location.pathname.toLowerCase());
 
@@ -104,6 +107,20 @@ function App() {
                                             viewMode={viewMode}
                                             toggleViewMode={toggleViewMode} />} />
           {/* <Route path="/" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} /> */}
+          <Route path="/poster/:id" element={<MainPage
+                                            user={user}
+                                            activeCategory={activeCategory}
+                                            filterDate={filterDate}
+                                            setFilterDate={setFilterDate}
+                                            filterLocations={filterLocations}
+                                            setFilterLocations={setFilterLocations}
+                                            filterTags={filterTags}
+                                            setFilterTags={setFilterTags}
+                                            searchQuery={searchQuery}
+                                            setSearchQuery={setSearchQuery}
+                                            availableTags={availableTags}
+                                            viewMode={viewMode}
+                                            toggleViewMode={toggleViewMode} />} />
           <Route path="/:category" element={<MainPage
                                             user={user}
                                             activeCategory={activeCategory}
@@ -124,7 +141,7 @@ function App() {
           <Route path="/authlogin" element={<AuthLogin />} />
           <Route path="/AuthSignUp" element={<AuthSignUp />} />
           <Route path="/AuthLogin" element={<AuthLogin />} />
-          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/profile" element={<UserProfile searchQuery={searchQuery} setSearchQuery={setSearchQuery} availableTags={availableTags} />} />
           <Route path="/edit-poster/:id" element={<EditPoster />} />
         </Routes>
       </main>

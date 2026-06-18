@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { auth, db, getUserDisplayName } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -6,9 +6,13 @@ import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import EditProfileModal from './EditProfileModal';
 import PosterMasonry from './PosterMasonry';
+import PosterFilters from './PosterFilters';
+import { PosterListCard } from './PosterList';
+import { filterPosters } from '../utils/filterPosters';
+import './PosterList.css';
 import './UserProfile.css';
 
-function UserProfile() {
+function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
   const [userPosts, setUserPosts] = useState([]);
   const [likedPostersData, setLikedPostersData] = useState([]);
   const [selectedPoster, setSelectedPoster] = useState(null);
@@ -16,6 +20,10 @@ function UserProfile() {
   const [userData, setUserData] = useState(null);
   const [activeTab, setActiveTab] = useState('my-posters');
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const [filterDate, setFilterDate] = useState('');
+  const [filterLocations, setFilterLocations] = useState([]);
+  const [filterTags, setFilterTags] = useState([]);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
   const pageWrapRef = useRef(null);
@@ -158,10 +166,33 @@ function UserProfile() {
     }
   };
 
-  const renderPosterCard = (poster, registerHeight, showActions = false) => (
+  const toggleViewMode = () => {
+    setViewMode((mode) => (mode === 'grid' ? 'list' : 'grid'));
+  };
+
+  const renderPosterActions = (poster) => (
+    <>
+      <button
+        type="button"
+        onClick={() => handleEditPost(poster.id)}
+        className="btn"
+      >
+        Edit
+      </button>
+      <button
+        type="button"
+        onClick={() => handleDeletePost(poster.id)}
+        className="btn btn-delete"
+      >
+        Delete
+      </button>
+    </>
+  );
+
+  const renderPosterCard = (poster, registerHeight, withActions = false) => (
     <div
       key={poster.id}
-      className={`poster-card ${showActions ? 'profile-poster-card' : ''}`}
+      className={`poster-card ${withActions ? 'profile-poster-card' : ''}`}
     >
       <img
         src={poster.image_url}
@@ -171,28 +202,9 @@ function UserProfile() {
           registerHeight(poster.id, e.target.naturalWidth, e.target.naturalHeight)
         }
       />
-      {showActions && (
+      {withActions && (
         <div className="profile-poster-actions">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditPost(poster.id);
-            }}
-            className="btn"
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeletePost(poster.id);
-            }}
-            className="btn btn-delete"
-          >
-            Delete
-          </button>
+          {renderPosterActions(poster)}
         </div>
       )}
     </div>
@@ -207,8 +219,22 @@ function UserProfile() {
   }
 
   const activePosters = activeTab === 'my-posters' ? userPosts : likedPostersData;
+  const filteredPosters = useMemo(
+    () =>
+      filterPosters(activePosters, {
+        filterDate,
+        filterLocations,
+        filterTags,
+        searchQuery: searchQuery || '',
+      }),
+    [activePosters, filterDate, filterLocations, filterTags, searchQuery]
+  );
   const showActions = activeTab === 'my-posters';
   const profilePhotoSrc = userData?.profilePhotoUrl || '/tester-pfp-icon.svg';
+  const likedPosterIds = likedPostersData.map((poster) => poster.id);
+  const uploaderNames = currentUser
+    ? { [currentUser.uid]: getUserDisplayName(userData) }
+    : {};
 
   return (
     <div className="profile-page-wrap" ref={pageWrapRef}>
@@ -222,11 +248,7 @@ function UserProfile() {
         <div className="profile-info-card" ref={profileInfoRef}>
           <div className="profile-info-inner">
             <div className="profile-icon">
-              <img
-                src={profilePhotoSrc}
-                alt="Profile"
-                className={userData?.profilePhotoUrl ? 'profile-icon__photo--custom' : ''}
-              />
+              <img src={profilePhotoSrc} alt="Profile" />
             </div>
 
             <div className="profile-text">
@@ -258,25 +280,43 @@ function UserProfile() {
           </div>
         </div>
 
-        <div className="profile-tabs" role="tablist" aria-label="Profile poster views">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'my-posters'}
-            className={`profile-tab ${activeTab === 'my-posters' ? 'active' : ''}`}
-            onClick={() => setActiveTab('my-posters')}
-          >
-            My Posters
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'liked'}
-            className={`profile-tab ${activeTab === 'liked' ? 'active' : ''}`}
-            onClick={() => setActiveTab('liked')}
-          >
-            Liked Posters
-          </button>
+        <div className="profile-posts-toolbar">
+          <div className="profile-tabs" role="tablist" aria-label="Profile poster views">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'my-posters'}
+              className={`profile-tab ${activeTab === 'my-posters' ? 'active' : ''}`}
+              onClick={() => setActiveTab('my-posters')}
+            >
+              My Posters
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'liked'}
+              className={`profile-tab ${activeTab === 'liked' ? 'active' : ''}`}
+              onClick={() => setActiveTab('liked')}
+            >
+              Liked Posters
+            </button>
+          </div>
+
+          <PosterFilters
+            variant="profile"
+            filterDate={filterDate}
+            setFilterDate={setFilterDate}
+            filterLocations={filterLocations}
+            setFilterLocations={setFilterLocations}
+            filterTags={filterTags}
+            setFilterTags={setFilterTags}
+            availableTags={availableTags}
+            toggleViewMode={toggleViewMode}
+            viewMode={viewMode}
+            setSearchQuery={setSearchQuery}
+            onResetFilters={() => {}}
+            showCategoryBar={false}
+          />
         </div>
 
         <div className="poster-list-wrapper profile-posts-wrapper">
@@ -288,14 +328,34 @@ function UserProfile() {
                   : "You haven't liked any posters yet."}
               </p>
             </div>
-          ) : (
+          ) : filteredPosters.length === 0 ? (
+            <div className="empty-state">
+              <h2>No posters match your filters.</h2>
+              <p>Try adjusting your filters or search.</p>
+            </div>
+          ) : viewMode === 'grid' ? (
             <PosterMasonry
-              posters={activePosters}
+              posters={filteredPosters}
               actionExtraWeight={showActions ? 0.35 : 0}
               renderPoster={(poster, registerHeight) =>
                 renderPosterCard(poster, registerHeight, showActions)
               }
             />
+          ) : (
+            <ul className="poster-list">
+              {filteredPosters.map((poster) => (
+                <PosterListCard
+                  key={poster.id}
+                  poster={poster}
+                  user={currentUser}
+                  likedPosters={likedPosterIds}
+                  onOpen={handlePosterClick}
+                  onLikeToggle={handleLikeToggle}
+                  uploaderNames={uploaderNames}
+                  renderActions={showActions ? renderPosterActions : undefined}
+                />
+              ))}
+            </ul>
           )}
         </div>
 
@@ -304,7 +364,7 @@ function UserProfile() {
             poster={selectedPoster}
             onClose={handleCloseModal}
             user={currentUser}
-            likedPosters={likedPostersData.map((p) => p.id)}
+            likedPosters={likedPosterIds}
             handleLikeToggle={handleLikeToggle}
             uploaderName={uploaderName}
           />
