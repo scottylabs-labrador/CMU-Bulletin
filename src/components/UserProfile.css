@@ -440,14 +440,15 @@
   height: 96px;
   border-radius: 50%;
   object-fit: cover;
-  background: #f3f5f8;
-  border: 1px solid #E6E6E6;
-  padding: 6px;
-  box-sizing: border-box;
+  background: transparent;
+}
+
+.profile-edit-photo__preview--default {
+  object-fit: contain;
 }
 
 .profile-edit-photo__preview--custom {
-  padding: 0;
+  background: #f3f5f8;
 }
 
 .profile-edit-photo__change {

@@ -529,7 +529,7 @@ button:focus-visible,
   text-decoration: none !important;
 }
 
-button:hover:not(.nav-icon-btn):not(.clearbtn):not(.profile-tab):not(.profile-sign-out-btn):not(.profile-edit-btn):not(.profile-edit-form__cancel):not(.profile-edit-form__save):not(.profile-edit-modal__close):not(.profile-edit-photo__preview-wrap):not(.profile-edit-photo__remove):not(.profile-poster-action-btn):not(.filter-reset-link):not(.filter-control--view):not(.auth-submit-btn):not(.poster-upload-submit):not(.poster-upload-cancel):not(.modal-close-btn):not(.modal-share-btn):not(.poster-list-card__share):not(.poster-list-card__like):not(.category-bar-arrow):not(.category-bar__category):not(.modal-heart-overlay),
+button:hover:not(.nav-icon-btn):not(.clearbtn):not(.profile-tab):not(.profile-sign-out-btn):not(.profile-edit-btn):not(.profile-edit-form__cancel):not(.profile-edit-form__save):not(.profile-edit-modal__close):not(.profile-edit-photo__preview-wrap):not(.profile-edit-photo__remove):not(.profile-poster-action-btn):not(.filter-reset-link):not(.filter-control--view):not(.auth-submit-btn):not(.poster-upload-submit):not(.poster-upload-cancel):not(.modal-close-btn):not(.modal-share-btn):not(.poster-list-card__share):not(.poster-list-card__like):not(.sort-dropdown__option):not(.category-bar-arrow):not(.category-bar__category):not(.modal-heart-overlay),
 .btn:hover:not(.btn-delete) {
   background-color: #f3f5f8;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
@@ -949,7 +949,7 @@ input:focus, textarea:focus {
   flex: 0 0 50%;
   width: 50%;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   padding: 1.5rem;
   box-sizing: border-box;
@@ -957,6 +957,7 @@ input:focus, textarea:focus {
 }
 
 .auth-promo {
+  position: relative;
   width: 100%;
   height: calc(100vh - 3rem);
   max-height: calc(100vh - 3rem);
@@ -965,16 +966,18 @@ input:focus, textarea:focus {
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.04),
     0 2px 8px rgba(0, 0, 0, 0.03);
-  background: linear-gradient(145deg, #f6f8fb 0%, #eef1f5 45%, #e6eaef 100%);
+  background: #eef1f5;
   overflow: hidden;
 }
 
 .auth-promo-img {
+  position: absolute;
+  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
-  
-  object-fit: cover; 
-  object-position: center; 
+  object-fit: cover;
+  object-position: center;
 }
 
 .auth-form-panel {

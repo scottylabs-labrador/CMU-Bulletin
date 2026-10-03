@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MultiSelectDropdown from './MultiSelectDropdown';
+import SortDropdown from './SortDropdown';
+import { DEFAULT_POSTER_SORT, DEFAULT_POSTER_SORT_DIRECTION } from '../utils/sortPosters';
 import './PosterFilters.css';
 
 export const POSTER_CATEGORIES = ['All', 'career', 'clubs', 'performance', 'sports', 'social', 'academic'];
@@ -78,6 +80,10 @@ function PosterFilters({
   flavorText = "", // hiding this temporarily
   showCategoryBar = true,
   variant,
+  sortBy,
+  setSortBy,
+  sortDirection,
+  setSortDirection,
 }) {
   const navigate = useNavigate();
   const categoryScrollRef = useRef(null);
@@ -127,6 +133,12 @@ function PosterFilters({
     setFilterLocations([]);
     setFilterTags([]);
     setSearchQuery('');
+    if (setSortBy) {
+      setSortBy(DEFAULT_POSTER_SORT);
+    }
+    if (setSortDirection) {
+      setSortDirection(DEFAULT_POSTER_SORT_DIRECTION);
+    }
     if (onResetFilters) {
       onResetFilters();
     } else {
@@ -180,6 +192,15 @@ function PosterFilters({
             selectedOptions={filterTags}
             onChange={setFilterTags}
           />
+
+          {sortBy !== undefined && setSortBy && setSortDirection && (
+            <SortDropdown
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSortByChange={setSortBy}
+              onSortDirectionChange={setSortDirection}
+            />
+          )}
 
           <button
             type="button"

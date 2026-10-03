@@ -82,6 +82,7 @@ export function filterPosters(
     filterLocations = [],
     filterTags = [],
     searchQuery = '',
+    uploaderNames = {},
     excludePastEvents = true,
   } = {}
 ) {
@@ -114,11 +115,17 @@ export function filterPosters(
 
   if (searchQuery) {
     const query = searchQuery.toLowerCase();
-    currentPosters = currentPosters.filter(
-      (poster) =>
-        poster.title.toLowerCase().includes(query) ||
-        poster.description.toLowerCase().includes(query)
-    );
+    currentPosters = currentPosters.filter((poster) => {
+      const organizer = (poster.organizer || uploaderNames[poster.uploaded_by] || '').toLowerCase();
+      const tags = (poster.tags || []).map((tag) => tag.toLowerCase());
+
+      return (
+        (poster.title || '').toLowerCase().includes(query) ||
+        (poster.description || '').toLowerCase().includes(query) ||
+        organizer.includes(query) ||
+        tags.some((tag) => tag.includes(query))
+      );
+    });
   }
 
   if (filterLocations.length > 0) {

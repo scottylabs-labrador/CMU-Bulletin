@@ -9,6 +9,7 @@ import PosterMasonry from './PosterMasonry';
 import PosterFilters from './PosterFilters';
 import { PosterListCard } from './PosterList';
 import { filterPosters } from '../utils/filterPosters';
+import { DEFAULT_POSTER_SORT, DEFAULT_POSTER_SORT_DIRECTION, sortPosters } from '../utils/sortPosters';
 import './PosterList.css';
 import './UserProfile.css';
 
@@ -24,6 +25,8 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
   const [filterDate, setFilterDate] = useState('');
   const [filterLocations, setFilterLocations] = useState([]);
   const [filterTags, setFilterTags] = useState([]);
+  const [sortBy, setSortBy] = useState(DEFAULT_POSTER_SORT);
+  const [sortDirection, setSortDirection] = useState(DEFAULT_POSTER_SORT_DIRECTION);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
   const pageWrapRef = useRef(null);
@@ -117,6 +120,7 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
+      navigate('/authlogin');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -229,22 +233,28 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
   }
 
   const activePosters = activeTab === 'my-posters' ? userPosts : likedPostersData;
-  const filteredPosters = useMemo(
-    () =>
-      filterPosters(activePosters, {
-        filterDate,
-        filterLocations,
-        filterTags,
-        searchQuery: searchQuery || '',
-      }),
-    [activePosters, filterDate, filterLocations, filterTags, searchQuery]
-  );
-  const showActions = activeTab === 'my-posters';
   const profilePhotoSrc = userData?.profilePhotoUrl || '/tester-pfp-icon.svg';
   const likedPosterIds = likedPostersData.map((poster) => poster.id);
   const uploaderNames = currentUser
     ? { [currentUser.uid]: getUserDisplayName(userData) }
     : {};
+  const filteredPosters = useMemo(
+    () =>
+      sortPosters(
+        filterPosters(activePosters, {
+          filterDate,
+          filterLocations,
+          filterTags,
+          searchQuery: searchQuery || '',
+          uploaderNames,
+        }),
+        sortBy,
+        uploaderNames,
+        sortDirection
+      ),
+    [activePosters, filterDate, filterLocations, filterTags, searchQuery, sortBy, sortDirection, uploaderNames]
+  );
+  const showActions = activeTab === 'my-posters';
 
   return (
     <div className="profile-page-wrap" ref={pageWrapRef}>
@@ -324,6 +334,10 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
             toggleViewMode={toggleViewMode}
             viewMode={viewMode}
             setSearchQuery={setSearchQuery}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortDirection={sortDirection}
+            setSortDirection={setSortDirection}
             onResetFilters={() => {}}
             showCategoryBar={false}
           />

@@ -148,7 +148,7 @@ function EditProfileModal({ userData, onClose, onSaved }) {
               <img
                 src={previewPhoto || fallbackPhoto}
                 alt=""
-                className={`profile-edit-photo__preview${previewPhoto ? ' profile-edit-photo__preview--custom' : ''}`}
+                className={`profile-edit-photo__preview${previewPhoto ? ' profile-edit-photo__preview--custom' : ' profile-edit-photo__preview--default'}`}
               />
               <span className="profile-edit-photo__change">Change photo</span>
             </button>

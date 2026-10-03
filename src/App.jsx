@@ -11,6 +11,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import AuthSignUp from './components/AuthSignUp';
 import AuthLogin from './components/AuthLogin';
 import Footer from './components/Footer';
+import { DEFAULT_POSTER_SORT, DEFAULT_POSTER_SORT_DIRECTION } from './utils/sortPosters';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -22,6 +23,8 @@ function App() {
   const location = useLocation();
 
   const [viewMode, setViewMode] = useState('grid');  // Default to 'grid'
+  const [sortBy, setSortBy] = useState(DEFAULT_POSTER_SORT);
+  const [sortDirection, setSortDirection] = useState(DEFAULT_POSTER_SORT_DIRECTION);
   
   // Function to toggle view mode
   const toggleViewMode = () => {
@@ -105,7 +108,11 @@ function App() {
                                             setSearchQuery={setSearchQuery}
                                             availableTags={availableTags}
                                             viewMode={viewMode}
-                                            toggleViewMode={toggleViewMode} />} />
+                                            toggleViewMode={toggleViewMode}
+                                            sortBy={sortBy}
+                                            setSortBy={setSortBy}
+                                            sortDirection={sortDirection}
+                                            setSortDirection={setSortDirection} />} />
           {/* <Route path="/" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} /> */}
           <Route path="/poster/:id" element={<MainPage
                                             user={user}
@@ -120,7 +127,11 @@ function App() {
                                             setSearchQuery={setSearchQuery}
                                             availableTags={availableTags}
                                             viewMode={viewMode}
-                                            toggleViewMode={toggleViewMode} />} />
+                                            toggleViewMode={toggleViewMode}
+                                            sortBy={sortBy}
+                                            setSortBy={setSortBy}
+                                            sortDirection={sortDirection}
+                                            setSortDirection={setSortDirection} />} />
           <Route path="/:category" element={<MainPage
                                             user={user}
                                             activeCategory={activeCategory}
@@ -134,7 +145,11 @@ function App() {
                                             setSearchQuery={setSearchQuery}
                                             availableTags={availableTags}
                                             viewMode={viewMode}
-                                            toggleViewMode={toggleViewMode} />} />
+                                            toggleViewMode={toggleViewMode}
+                                            sortBy={sortBy}
+                                            setSortBy={setSortBy}
+                                            sortDirection={sortDirection}
+                                            setSortDirection={setSortDirection} />} />
           {/* <Route path="/:category" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} /> */}
           <Route path="/post" element={<PosterUpload user={user} />} />
           <Route path="/authsignup" element={<AuthSignUp />} />
