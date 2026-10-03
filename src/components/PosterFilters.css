@@ -2,6 +2,7 @@
   position: relative;
   width: 100%;
   max-width: 100%;
+  margin-bottom: var(--section-gap, 1rem);
   box-sizing: border-box;
 }
 
@@ -12,7 +13,7 @@
   gap: 0.25rem;
   width: 100%;
   max-width: 100%;
-  padding: 0.75rem 0;
+  padding: 0;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
@@ -23,10 +24,6 @@
 
 .category-bar-wrap .category-bar::-webkit-scrollbar {
   display: none;
-}
-
-.category-bar-wrap .category-bar--centered {
-  justify-content: center;
 }
 
 .category-bar-wrap .event-category {
@@ -117,4 +114,95 @@
 .category-bar .category-bar__category.active:hover {
   background-color: #f3f5f8;
   color: var(--text-color);
+}
+
+/* Category bar: primary navigation. Active = dark text + accent underline (no gray fill,
+   so it doesn't compete with the quieter Grid/List toggle). */
+.category-bar-wrap .category-bar a,
+.category-bar-wrap .category-bar .category-bar__category {
+  position: relative;
+  color: #7B7B7B;
+}
+
+.category-bar-wrap .category-bar a.active,
+.category-bar-wrap .category-bar .category-bar__category.active,
+.category-bar-wrap .category-bar a.active:hover,
+.category-bar-wrap .category-bar .category-bar__category.active:hover {
+  background-color: transparent;
+  color: #212529;
+}
+
+.category-bar-wrap .category-bar a:hover:not(.active),
+.category-bar-wrap .category-bar .category-bar__category:hover:not(.active) {
+  color: var(--primary-color);
+}
+
+.category-bar-wrap .category-bar a.active::after,
+.category-bar-wrap .category-bar .category-bar__category.active::after {
+  content: '';
+  position: absolute;
+  left: 0.85rem;
+  right: 0.85rem;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--primary-color);
+}
+
+/* Main page: filter bar sits between the categories and the gray poster box,
+   using the same vertical step as the rest of the top section. */
+.main-page-content > .filter-bar {
+  padding: 0;
+  margin-bottom: var(--section-gap, 1rem);
+}
+
+/* Grid / List toggle — one joined segmented control, deliberately quieter than the categories */
+.view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #E6E6E6;
+  border-radius: 10px;
+}
+
+.view-toggle .view-toggle__tab {
+  height: 32px;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #7B7B7B;
+  font-family: 'Satoshi-Bold', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.view-toggle .view-toggle__tab:hover {
+  background: #f3f5f8;
+  color: #4A5662;
+  box-shadow: none;
+}
+
+.view-toggle .view-toggle__tab.active,
+.view-toggle .view-toggle__tab.active:hover {
+  background: #eaedf1;
+  color: #212529;
+}
+
+@media (max-width: 768px) {
+  .view-toggle {
+    display: flex;
+    width: 100%;
+  }
+
+  .view-toggle .view-toggle__tab {
+    flex: 1;
+  }
 }

@@ -13,9 +13,16 @@ import { DEFAULT_POSTER_SORT, DEFAULT_POSTER_SORT_DIRECTION, sortPosters } from 
 import './PosterList.css';
 import './UserProfile.css';
 
+function getDraftTimestamp(draft) {
+  const stamp = draft.updated_at || draft.created_at;
+  if (stamp?.toMillis) return stamp.toMillis();
+  return draft.savedAt || 0;
+}
+
 function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
   const [userPosts, setUserPosts] = useState([]);
   const [likedPostersData, setLikedPostersData] = useState([]);
+  const [drafts, setDrafts] = useState([]);
   const [selectedPoster, setSelectedPoster] = useState(null);
   const [uploaderName, setUploaderName] = useState('');
   const [userData, setUserData] = useState(null);
@@ -95,10 +102,25 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
         setLikedPostersData(fetchedLikedPosters);
       });
 
+      const draftsRef = collection(db, 'users', currentUser.uid, 'posterDrafts');
+      const unsubscribeDrafts = onSnapshot(
+        draftsRef,
+        (snapshot) => {
+          const draftsData = snapshot.docs
+            .map((draftDoc) => ({ id: draftDoc.id, ...draftDoc.data() }))
+            .sort((a, b) => getDraftTimestamp(b) - getDraftTimestamp(a));
+          setDrafts(draftsData);
+        },
+        (error) => {
+          console.error('Error loading drafts:', error);
+        }
+      );
+
       return () => {
         unsubscribeUser();
         unsubscribePosts();
         unsubscribeLiked();
+        unsubscribeDrafts();
       };
     }
   }, [currentUser]);
@@ -140,6 +162,21 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
 
   const handleEditPost = (postId) => {
     navigate(`/edit-poster/${postId}`);
+  };
+
+  const handleContinueDraft = (draftId) => {
+    navigate(`/post?draft=${draftId}`);
+  };
+
+  const handleDeleteDraft = async (draftId) => {
+    if (!window.confirm('Are you sure you want to delete this draft?')) return;
+
+    try {
+      await deleteDoc(doc(db, 'users', currentUser.uid, 'posterDrafts', draftId));
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      alert('Error deleting draft.');
+    }
   };
 
   const handlePosterClick = (poster) => {
@@ -224,6 +261,62 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
     </div>
   );
 
+  const renderDraftCard = (draft, registerHeight) => (
+    <div key={draft.id} className="poster-card profile-poster-card">
+      <div className="profile-poster-media">
+        {draft.image ? (
+          <img
+            src={draft.image}
+            alt={draft.title || 'Draft poster'}
+            onClick={() => handleContinueDraft(draft.id)}
+            onLoad={(e) =>
+              registerHeight(draft.id, e.target.naturalWidth, e.target.naturalHeight)
+            }
+          />
+        ) : (
+          <div
+            className="profile-draft-placeholder"
+            role="button"
+            tabIndex={0}
+            onClick={() => handleContinueDraft(draft.id)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleContinueDraft(draft.id);
+              }
+            }}
+          >
+            {draft.title || 'Untitled draft'}
+          </div>
+        )}
+        <div className="profile-poster-actions profile-poster-actions--grid">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleContinueDraft(draft.id);
+            }}
+            className="profile-poster-action-btn"
+            aria-label="Edit draft"
+          >
+            <img src="/pen.svg" alt="" />
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleDeleteDraft(draft.id);
+            }}
+            className="profile-poster-action-btn profile-poster-action-btn--delete"
+            aria-label="Delete draft"
+          >
+            <img src="/trash.svg" alt="" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (!currentUser) {
     return (
       <div className="page-content profile-page">
@@ -232,7 +325,8 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
     );
   }
 
-  const activePosters = activeTab === 'my-posters' ? userPosts : likedPostersData;
+  const activePosters =
+    activeTab === 'my-posters' ? userPosts : activeTab === 'liked' ? likedPostersData : [];
   const profilePhotoSrc = userData?.profilePhotoUrl || '/tester-pfp-icon.svg';
   const likedPosterIds = likedPostersData.map((poster) => poster.id);
   const uploaderNames = currentUser
@@ -320,8 +414,18 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
             >
               Liked Posters
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'drafts'}
+              className={`profile-tab ${activeTab === 'drafts' ? 'active' : ''}`}
+              onClick={() => setActiveTab('drafts')}
+            >
+              Drafts{drafts.length > 0 ? ` (${drafts.length})` : ''}
+            </button>
           </div>
 
+          {activeTab !== 'drafts' && (
           <PosterFilters
             variant="profile"
             filterDate={filterDate}
@@ -341,10 +445,23 @@ function UserProfile({ searchQuery, setSearchQuery, availableTags }) {
             onResetFilters={() => {}}
             showCategoryBar={false}
           />
+          )}
         </div>
 
         <div className="poster-list-wrapper profile-posts-wrapper">
-          {activePosters.length === 0 ? (
+          {activeTab === 'drafts' ? (
+            drafts.length === 0 ? (
+              <div className="profile-empty-state">
+                <p>You don&apos;t have any saved drafts.</p>
+              </div>
+            ) : (
+              <PosterMasonry
+                posters={drafts}
+                actionExtraWeight={0}
+                renderPoster={renderDraftCard}
+              />
+            )
+          ) : activePosters.length === 0 ? (
             <div className="profile-empty-state">
               <p>
                 {activeTab === 'my-posters'

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import HeartIcon from './HeartIcon';
 import { formatEventDateTime } from '../utils/eventDateTime';
+import { normalizeExternalUrl, getUrlHostname } from '../utils/externalUrl';
 
 function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploaderName }) {
   const [copied, setCopied] = useState(false);
@@ -17,6 +18,9 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
   if (!poster) return null;
 
   const googleCalUrl = poster.googleCalUrl;
+  // Re-validate on display so only http(s) links are ever rendered as an href.
+  const externalUrl = normalizeExternalUrl(poster.url) || '';
+  const externalHost = externalUrl ? getUrlHostname(externalUrl) : '';
 
   const getPosterShareUrl = () => `${window.location.origin}/poster/${poster.id}`;
 
@@ -123,24 +127,54 @@ function Modal({ poster, onClose, user, likedPosters, handleLikeToggle, uploader
               </div>
             )}
             {poster.repeating && (
-              <>
+              <div className="modal-repeating">
                 <p><strong>Next Occurring:</strong> {formatEventDateTime(poster.next_occurring_date, poster.event_time)}</p>
                 <p><strong>Frequency:</strong> {poster.frequency}</p>
                 <p><strong>Days:</strong> {poster.days_of_week.join(', ')}</p>
-              </>
+              </div>
             )}
 
-          {googleCalUrl && (
+          {(googleCalUrl || externalUrl) && (
               <div className="modal-calendar-section">
-                  <a
-                    className="modal-calendar-btn"
-                    href={googleCalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img src="/calendar-icon.svg" alt="" className="modal-calendar-btn__icon" />
-                    Add to Google Calendar
-                  </a>
+                  {googleCalUrl && (
+                    <a
+                      className="modal-calendar-btn"
+                      href={googleCalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <img src="/calendar-icon.svg" alt="" className="modal-calendar-btn__icon" />
+                      Add to Google Calendar
+                    </a>
+                  )}
+                  {externalUrl && (
+                    <a
+                      className="modal-link-btn"
+                      href={externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={externalUrl}
+                    >
+                      <span className="modal-link-btn__label">
+                        {externalHost ? `Visit ${externalHost}` : 'Visit website'}
+                      </span>
+                      <svg
+                        className="modal-link-btn__icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M14 4h6v6" />
+                        <path d="M20 4L10 14" />
+                        <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+                      </svg>
+                      <span className="modal-sr-only"> (opens in a new tab)</span>
+                    </a>
+                  )}
               </div>
             )}
           </div>

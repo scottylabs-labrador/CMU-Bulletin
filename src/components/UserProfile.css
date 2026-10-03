@@ -226,6 +226,23 @@
   position: relative;
 }
 
+/* Drafts without an image yet use the same card, with a neutral placeholder */
+.profile-draft-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: #f3f5f8;
+  color: #7B7B7B;
+  font-family: 'Satoshi-Medium', sans-serif;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+}
+
 .profile-poster-media {
   position: relative;
   overflow: hidden;
@@ -339,7 +356,7 @@
     justify-content: flex-start;
   }
 
-  .profile-posts-toolbar .filter-bar__controls .filter-control--view {
+  .profile-posts-toolbar .filter-bar__controls .view-toggle {
     width: 100%;
   }
 }

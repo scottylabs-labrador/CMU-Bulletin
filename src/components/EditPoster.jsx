@@ -9,6 +9,7 @@ import {
   PREMADE_LOCATIONS,
   PREMADE_LOCATION_SET,
 } from './PosterFilters';
+import { normalizeExternalUrl } from '../utils/externalUrl';
 import './PosterUpload.css';
 
 const daysOfWeekOptions = [
@@ -101,6 +102,7 @@ function EditPoster() {
   const [title, setTitle] = useState('');
   const [organizer, setOrganizer] = useState('');
   const [description, setDescription] = useState('');
+  const [url, setUrl] = useState('');
   const [location, setLocation] = useState([]);
   const [category, setCategory] = useState([]);
   const [image, setImage] = useState(null);
@@ -144,6 +146,7 @@ function EditPoster() {
         setTitle(data.title || '');
         setOrganizer(data.organizer || '');
         setDescription(data.description || '');
+        setUrl(data.url || '');
         setLocation(normalizeLocations(data.location));
         setCategory(Array.isArray(data.category) ? data.category : []);
         setCurrentImageUrl(data.image_url || null);
@@ -233,6 +236,11 @@ function EditPoster() {
       setError('Please add at least one location.');
       return;
     }
+    const normalizedUrl = normalizeExternalUrl(url);
+    if (normalizedUrl === null) {
+      setError('Please enter a valid link, like https://example.com/signup.');
+      return;
+    }
 
     setUploading(true);
     setError(null);
@@ -243,6 +251,7 @@ function EditPoster() {
         title,
         organizer,
         description,
+        url: normalizedUrl,
         location,
         category,
         uploaded_by: auth.currentUser.uid,
@@ -408,6 +417,22 @@ function EditPoster() {
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                 />
+              </div>
+
+              <div className="poster-upload-field">
+                <label htmlFor="edit-poster-url">Link (optional)</label>
+                <input
+                  id="edit-poster-url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
+                  placeholder="https://example.com/signup"
+                  value={url}
+                  onChange={(event) => setUrl(event.target.value)}
+                />
+                <p className="poster-upload-field__hint">
+                  Shown as an off-site link button on the poster.
+                </p>
               </div>
 
               <div className="poster-upload-details-section">
