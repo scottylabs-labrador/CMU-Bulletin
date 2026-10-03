@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import MultiSelectDropdown from './MultiSelectDropdown';
+import SortDropdown from './SortDropdown';
+import { DEFAULT_POSTER_SORT, DEFAULT_POSTER_SORT_DIRECTION } from '../utils/sortPosters';
 import './PosterFilters.css';
 
 export const POSTER_CATEGORIES = ['All', 'career', 'clubs', 'performance', 'sports', 'social', 'academic'];
@@ -8,20 +10,24 @@ export const POSTER_CATEGORIES = ['All', 'career', 'clubs', 'performance', 'spor
 export const POSTER_CATEGORY_OPTIONS = POSTER_CATEGORIES.filter((category) => category !== 'All');
 
 export const AVAILABLE_LOCATIONS = [
-  'University Center',
+  'Cohen University Center',
   'Hunt Library',
-  'Purnell',
-  'CFA',
-  'Wean',
-  'Gates',
-  'Tepper',
+  'Purnell Center',
+  'College of Fine Arts',
+  'Wean Hall',
+  'Gates and Hillman Center',
+  'Tepper School of Business',
   'The Cut',
-  'Baker-Porter',
-  'Posner',
-  'Scaife',
-  'Doherty',
+  'Baker Hall',
+  'Porter Hall',
+  'Posner Hall',
+  'Scaife Hall',
+  'Doherty Hall',
   'Mellon Institute',
   'Highmark Center',
+  'Maggie Mo Carnegie Hall',
+  'Maggie Mo Commons',
+  'Fifth Avenue Commons',
   'Online',
   'Off-Campus',
   'Other',
@@ -78,8 +84,11 @@ function PosterFilters({
   flavorText = "", // hiding this temporarily
   showCategoryBar = true,
   variant,
+  sortBy,
+  setSortBy,
+  sortDirection,
+  setSortDirection,
 }) {
-  const navigate = useNavigate();
   const categoryScrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -127,70 +136,42 @@ function PosterFilters({
     setFilterLocations([]);
     setFilterTags([]);
     setSearchQuery('');
+    if (setSortBy) {
+      setSortBy(DEFAULT_POSTER_SORT);
+    }
+    if (setSortDirection) {
+      setSortDirection(DEFAULT_POSTER_SORT_DIRECTION);
+    }
+    // Resetting filters never changes the selected category.
     if (onResetFilters) {
       onResetFilters();
-    } else {
-      navigate('/');
     }
   };
 
+  const viewToggle = (
+    <div className="view-toggle" role="tablist" aria-label="Poster layout">
+      {[
+        { mode: 'grid', label: 'Grid View' },
+        { mode: 'list', label: 'List View' },
+      ].map(({ mode, label }) => (
+        <button
+          key={mode}
+          type="button"
+          role="tab"
+          aria-selected={viewMode === mode}
+          className={`view-toggle__tab${viewMode === mode ? ' active' : ''}`}
+          onClick={() => {
+            if (viewMode !== mode) toggleViewMode();
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <>
-      <div className={`filter-bar${variant === 'profile' ? ' filter-bar--profile' : ''}`}>
-        {variant !== 'profile' && (
-          <div className="navbar-flavor-text">{flavorText}</div>
-        )}
-
-        <div className="filter-bar__controls">
-          <button
-            type="button"
-            className="filter-reset-link"
-            onClick={handleResetFilters}
-          >
-            Reset filters
-          </button>
-
-          <input
-            type="date"
-            className="filter-control filter-control--date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-          />
-
-          <MultiSelectDropdown
-            label={
-              <>
-                <img src="/location-icon.svg" alt="" />
-                Location
-              </>
-            }
-            options={AVAILABLE_LOCATIONS}
-            selectedOptions={filterLocations}
-            onChange={setFilterLocations}
-          />
-
-          <MultiSelectDropdown
-            label={
-              <>
-                <img src="/tag-icon.svg" alt="" />
-                Tags
-              </>
-            }
-            options={availableTags}
-            selectedOptions={filterTags}
-            onChange={setFilterTags}
-          />
-
-          <button
-            type="button"
-            className="filter-control filter-control--view"
-            onClick={toggleViewMode}
-          >
-            {viewMode === 'grid' ? 'List View' : 'Grid View'}
-          </button>
-        </div>
-      </div>
-
       {showCategoryBar && (
       <div className="category-bar-wrap">
         <CategoryScrollArrow
@@ -202,7 +183,7 @@ function PosterFilters({
 
         <div
           ref={categoryScrollRef}
-          className={`category-bar${!hasOverflow ? ' category-bar--centered' : ''}`}
+          className="category-bar"
           onScroll={updateScrollState}
         >
           {POSTER_CATEGORIES.map((cat) => (
@@ -247,6 +228,69 @@ function PosterFilters({
         />
       </div>
       )}
+
+      <div className={`filter-bar${variant === 'profile' ? ' filter-bar--profile' : ''}`}>
+        {/* Main page: the toggle is the first item in the bar (far left). */}
+        {variant !== 'profile' && viewToggle}
+
+        {variant !== 'profile' && flavorText && (
+          <div className="navbar-flavor-text">{flavorText}</div>
+        )}
+
+        <div className="filter-bar__controls">
+          {/* Profile page: the controls hug the right, so the toggle leads them. */}
+          {variant === 'profile' && viewToggle}
+
+          <button
+            type="button"
+            className="filter-reset-link"
+            onClick={handleResetFilters}
+          >
+            Reset filters
+          </button>
+
+          <input
+            type="date"
+            className="filter-control filter-control--date"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+          />
+
+          <MultiSelectDropdown
+            label={
+              <>
+                <img src="/location-icon.svg" alt="" />
+                Location
+              </>
+            }
+            options={AVAILABLE_LOCATIONS}
+            selectedOptions={filterLocations}
+            onChange={setFilterLocations}
+          />
+
+          <MultiSelectDropdown
+            label={
+              <>
+                <img src="/tag-icon.svg" alt="" />
+                Tags
+              </>
+            }
+            options={availableTags}
+            selectedOptions={filterTags}
+            onChange={setFilterTags}
+          />
+
+          {sortBy !== undefined && setSortBy && setSortDirection && (
+            <SortDropdown
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSortByChange={setSortBy}
+              onSortDirectionChange={setSortDirection}
+            />
+          )}
+
+        </div>
+      </div>
     </>
   );
 }

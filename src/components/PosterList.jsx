@@ -14,6 +14,7 @@ import { formatEventDateTime } from '../utils/eventDateTime';
 // Import Masonry for column layout
 import PosterMasonry from './PosterMasonry';
 import { filterPosters, findNextOccurrence } from '../utils/filterPosters';
+import { sortPosters } from '../utils/sortPosters';
 import './PosterList.css';
 
 /**********************************************************************************/
@@ -276,7 +277,7 @@ function PosterListCard({ poster, user, likedPosters, onOpen, onLikeToggle, uplo
 // =====================================================
 // Main Component: PosterList
 // =====================================================
-function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user, viewMode }) {
+function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user, viewMode, sortBy = 'time', sortDirection = 'asc' }) {
   // Local state variables
   const [allPosters, setAllPosters] = useState([]);         // All posters fetched from DB
   const [filteredPosters, setFilteredPosters] = useState([]); // Posters after applying filters
@@ -328,18 +329,6 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
         const calUrl = createGoogleCalendarLink(poster);
         poster.googleCalUrl = calUrl;
         return poster;
-      })
-      // Sort by event date, then creation date
-      .sort((a, b) => {
-        const dateA = a.sort_date || (a.repeating ? a.next_occurring_date : a.single_event_date);
-        const dateB = b.sort_date || (b.repeating ? b.next_occurring_date : b.single_event_date);
-        const compareDates = new Date(dateA) - new Date(dateB);
-        if (compareDates !== 0) return compareDates;
-
-        // Secondary sort: by creation timestamp
-        const createdAtA = a.created_at ? a.created_at.toDate() : new Date(0);
-        const createdAtB = b.created_at ? b.created_at.toDate() : new Date(0);
-        return createdAtA - createdAtB;
       });
 
       setAllPosters(postersData);
@@ -407,15 +396,21 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   // --------------------------------------------
   useEffect(() => {
     setFilteredPosters(
-      filterPosters(allPosters, {
-        filterCategory,
-        filterDate,
-        filterLocations,
-        filterTags,
-        searchQuery,
-      })
+      sortPosters(
+        filterPosters(allPosters, {
+          filterCategory,
+          filterDate,
+          filterLocations,
+          filterTags,
+          searchQuery,
+          uploaderNames,
+        }),
+        sortBy,
+        uploaderNames,
+        sortDirection
+      )
     );
-  }, [filterCategory, allPosters, filterDate, searchQuery, filterLocations, filterTags]);
+  }, [filterCategory, allPosters, filterDate, searchQuery, filterLocations, filterTags, sortBy, sortDirection, uploaderNames]);
 
   // --------------------------------------------
   // Modal open/close handlers
@@ -437,36 +432,36 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
   return (
   <div>
     {/* Render Posters Based on the Current View Mode */}
-    {viewMode === 'grid' ? (
+    {viewMode === 'grid' ? ( 
       filteredPosters.length === 0 ? (
-        <div className="empty-state">
-          <h2>No posters yet.</h2>
-          <p>Be the first to share something!</p>
-        </div>
-      ) : (
+          <div className="empty-state">
+            <h2>No posters yet.</h2>
+            <p>Be the first to share something!</p>
+          </div>
+        ) : (
         <PosterMasonry
           posters={filteredPosters}
           renderPoster={(poster, registerHeight) => (
-            <div key={poster.id} className="poster-card">
-              <img
-                src={poster.image_url}
-                alt={poster.title}
-                onClick={() => handlePosterClick(poster)}
+              <div key={poster.id} className="poster-card">
+                <img
+                  src={poster.image_url}
+                  alt={poster.title}
+                  onClick={() => handlePosterClick(poster)}
                 onLoad={(e) =>
                   registerHeight(poster.id, e.target.naturalWidth, e.target.naturalHeight)
                 }
-              />
-            </div>
+                />
+              </div>
           )}
         />
       )
     ) : (
       filteredPosters.length === 0 ? (
-        <div className="empty-state">
-          <h2>No posters yet.</h2>
-          <p>Be the first to share something!</p>
-        </div>
-      ) : (
+          <div className="empty-state">
+            <h2>No posters yet.</h2>
+            <p>Be the first to share something!</p>
+          </div>
+        ) : (
         <ul className="poster-list">
           {filteredPosters.map((poster) => (
             <PosterListCard
@@ -479,7 +474,7 @@ function PosterList({ filterDate, filterLocations, filterTags, searchQuery, user
               uploaderNames={uploaderNames}
             />
           ))}
-        </ul>
+      </ul>
       )
     )}
     

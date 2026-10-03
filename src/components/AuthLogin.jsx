@@ -26,10 +26,8 @@ function AuthLogin() {
     <div className="auth-page">
       <div className="auth-promo-panel">
         <div className="auth-promo" aria-hidden="true">
-          <img src="./auth_graphic.svg" alt="login promo" /> 
+          <img src="/auth_graphic.svg" alt="" className="auth-promo-img" />
         </div>
-        {/* <img src="./auth_graphic.svg" alt="login promo" /> */} 
-        {/* fix this so the image is in the rounded container and resizes */}
       </div>
 
       <div className="auth-form-panel form-container">

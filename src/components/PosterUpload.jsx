@@ -1,7 +1,16 @@
 // src/components/PosterUpload.jsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { db, auth } from '../firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  Timestamp,
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc,
+} from 'firebase/firestore';
 import LocationSearchInput from './LocationSearchInput';
 import TagInput from './TagInput';
 import {
@@ -9,6 +18,7 @@ import {
   PREMADE_LOCATIONS,
   PREMADE_LOCATION_SET,
 } from './PosterFilters';
+import { normalizeExternalUrl } from '../utils/externalUrl';
 import './PosterUpload.css';
 
 const DRAFT_SAVE_DELAY_MS = 700;
@@ -92,10 +102,37 @@ function normalizeDraftTags(draftTags) {
   return [];
 }
 
-function PosterUpload() {
+function isDraftEmpty(draft) {
+  return (
+    !draft.title.trim() &&
+    !draft.organizer.trim() &&
+    !draft.description.trim() &&
+    !draft.url.trim() &&
+    !draft.image &&
+    draft.location.length === 0 &&
+    draft.category.length === 0 &&
+    draft.tags.length === 0 &&
+    !draft.singleEventDate &&
+    !draft.singleEventTime &&
+    !draft.singleEventTimeEnd &&
+    !draft.nextOccurringDate &&
+    !draft.frequency &&
+    draft.daysOfWeek.length === 0
+  );
+}
+
+function PosterUpload({ user }) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const draftParam = searchParams.get('draft');
+  const uid = user?.uid || auth.currentUser?.uid || null;
+
+  const [draftId, setDraftId] = useState(null);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [title, setTitle] = useState('');
   const [organizer, setOrganizer] = useState('');
   const [description, setDescription] = useState('');
+  const [url, setUrl] = useState('');
   const [location, setLocation] = useState([]);
   const [category, setCategory] = useState([]);
   const [image, setImage] = useState(null);
@@ -116,11 +153,13 @@ function PosterUpload() {
   const fileInputRef = useRef(null);
   const skipDraftSaveRef = useRef(true);
   const draftReadyRef = useRef(false);
+  const draftIdRef = useRef(null);
 
   const buildDraftPayload = useCallback(() => ({
     title,
     organizer,
     description,
+    url,
     location,
     category,
     image,
@@ -137,6 +176,7 @@ function PosterUpload() {
     title,
     organizer,
     description,
+    url,
     location,
     category,
     image,
@@ -154,6 +194,7 @@ function PosterUpload() {
     setTitle(draft.title || '');
     setOrganizer(draft.organizer || '');
     setDescription(draft.description || '');
+    setUrl(draft.url || '');
     let draftLocations = Array.isArray(draft.location) ? draft.location : [];
     if (draftLocations.includes('Other') && draft.otherLocation) {
       draftLocations = draftLocations.filter((loc) => loc !== 'Other');
@@ -172,15 +213,61 @@ function PosterUpload() {
     setDaysOfWeek(Array.isArray(draft.daysOfWeek) ? draft.daysOfWeek : []);
   }, []);
 
+  // Load either a saved draft (?draft=<id>) from Firestore, or the local autosave.
   useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) {
+    if (!uid) {
       draftReadyRef.current = true;
-      return;
+      return undefined;
+    }
+
+    if (draftParam) {
+      // Already showing this draft (e.g. right after saving it for the first time).
+      if (draftParam === draftIdRef.current) return undefined;
+
+      let cancelled = false;
+      draftReadyRef.current = false;
+
+      (async () => {
+        try {
+          const snap = await getDoc(doc(db, 'users', uid, 'posterDrafts', draftParam));
+          if (cancelled) return;
+
+          if (snap.exists()) {
+            applyDraft(snap.data());
+            draftIdRef.current = draftParam;
+            setDraftId(draftParam);
+            setError(null);
+            setDraftStatus('idle');
+          } else {
+            setError('That draft could not be found. It may have been deleted.');
+          }
+        } catch (err) {
+          if (!cancelled) {
+            console.error('Failed to load saved draft:', err);
+            setError('Failed to load that draft.');
+          }
+        } finally {
+          if (!cancelled) {
+            skipDraftSaveRef.current = true;
+            draftReadyRef.current = true;
+          }
+        }
+      })();
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    // No draft in the URL. If we were editing a saved draft, start from a blank form.
+    if (draftIdRef.current) {
+      draftIdRef.current = null;
+      setDraftId(null);
+      resetForm();
     }
 
     try {
-      const raw = localStorage.getItem(getDraftKey(user.uid));
+      const raw = localStorage.getItem(getDraftKey(uid));
       if (raw) {
         applyDraft(JSON.parse(raw));
         setDraftStatus('saved');
@@ -191,7 +278,9 @@ function PosterUpload() {
 
     draftReadyRef.current = true;
     skipDraftSaveRef.current = true;
-  }, [applyDraft]);
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyDraft, draftParam, uid]);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -202,9 +291,16 @@ function PosterUpload() {
       return undefined;
     }
 
+    // Editing a saved draft: changes are saved explicitly with "Save draft".
+    if (draftIdRef.current) {
+      setDraftStatus('idle');
+      return undefined;
+    }
+
     setDraftStatus('saving');
 
     const timer = setTimeout(() => {
+      if (draftIdRef.current) return;
       try {
         localStorage.setItem(getDraftKey(user.uid), JSON.stringify(buildDraftPayload()));
         setDraftStatus('saved');
@@ -278,6 +374,7 @@ function PosterUpload() {
     setTitle('');
     setOrganizer('');
     setDescription('');
+    setUrl('');
     setLocation([]);
     setCategory([]);
     setImage(null);
@@ -293,6 +390,54 @@ function PosterUpload() {
       fileInputRef.current.value = '';
     }
     skipDraftSaveRef.current = true;
+  };
+
+  const handleSaveDraft = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setError('You must be logged in to save a draft.');
+      return;
+    }
+
+    const payload = buildDraftPayload();
+    if (isDraftEmpty(payload)) {
+      setError('Add something to the poster before saving a draft.');
+      return;
+    }
+
+    setSavingDraft(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const { savedAt, ...fields } = payload;
+      const data = { ...fields, updated_at: Timestamp.now() };
+
+      if (draftIdRef.current) {
+        await setDoc(
+          doc(db, 'users', currentUser.uid, 'posterDrafts', draftIdRef.current),
+          data,
+          { merge: true }
+        );
+      } else {
+        const newDraftRef = await addDoc(
+          collection(db, 'users', currentUser.uid, 'posterDrafts'),
+          { ...data, created_at: Timestamp.now() }
+        );
+        draftIdRef.current = newDraftRef.id;
+        setDraftId(newDraftRef.id);
+        navigate(`/post?draft=${newDraftRef.id}`, { replace: true });
+      }
+
+      // The saved draft supersedes the temporary local autosave.
+      localStorage.removeItem(getDraftKey(currentUser.uid));
+      setDraftStatus('draft-saved');
+    } catch (err) {
+      console.error('Failed to save draft:', err);
+      setError(`Failed to save draft: ${err.message}`);
+    } finally {
+      setSavingDraft(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -311,6 +456,11 @@ function PosterUpload() {
     }
     if (location.length === 0) {
       setError('Please add at least one location.');
+      return;
+    }
+    const normalizedUrl = normalizeExternalUrl(url);
+    if (normalizedUrl === null) {
+      setError('Please enter a valid link, like https://example.com/signup.');
       return;
     }
 
@@ -334,6 +484,10 @@ function PosterUpload() {
         sort_date: repeating ? nextOccurringDate : singleEventDate,
       };
 
+      if (normalizedUrl) {
+        posterData.url = normalizedUrl;
+      }
+
       if (repeating) {
         posterData.next_occurring_date = nextOccurringDate;
         posterData.frequency = frequency;
@@ -353,6 +507,19 @@ function PosterUpload() {
 
       await addDoc(collection(db, 'posters'), posterData);
 
+      // If this poster came from a saved draft, the draft is no longer needed.
+      const publishedDraftId = draftIdRef.current;
+      if (publishedDraftId) {
+        draftIdRef.current = null;
+        setDraftId(null);
+        try {
+          await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'posterDrafts', publishedDraftId));
+        } catch (deleteErr) {
+          console.error('Failed to delete published draft:', deleteErr);
+        }
+        navigate('/post', { replace: true });
+      }
+
       clearDraft();
       setSuccess(true);
       resetForm();
@@ -371,15 +538,22 @@ function PosterUpload() {
     .filter(Boolean)
     .join(' ');
 
-  const draftStatusLabel =
-    draftStatus === 'saving' ? 'Saving…' : draftStatus === 'saved' ? 'Changes saved' : '';
+  const draftStatusLabel = savingDraft
+    ? 'Saving draft…'
+    : draftStatus === 'saving'
+      ? 'Saving…'
+      : draftStatus === 'draft-saved'
+        ? 'Draft saved'
+        : draftStatus === 'saved'
+          ? 'Changes saved'
+          : '';
 
   return (
     <div className="page-content poster-upload-page">
       <div className="poster-upload-container">
         <form className="poster-upload-form" onSubmit={handleSubmit}>
           <div className="poster-upload-header">
-            <h2>Upload New Poster</h2>
+            <h2>{draftId ? 'Edit Draft' : 'Upload New Poster'}</h2>
             <div className="poster-upload-header__actions">
               {draftStatusLabel && (
                 <span
@@ -389,7 +563,15 @@ function PosterUpload() {
                   {draftStatusLabel}
                 </span>
               )}
-              <button type="submit" disabled={uploading} className="poster-upload-submit">
+              <button
+                type="button"
+                className="poster-upload-cancel"
+                onClick={handleSaveDraft}
+                disabled={savingDraft || uploading}
+              >
+                {savingDraft ? 'Saving…' : draftId ? 'Update draft' : 'Save draft'}
+              </button>
+              <button type="submit" disabled={uploading || savingDraft} className="poster-upload-submit">
                 {uploading ? 'Uploading…' : 'Upload poster'}
               </button>
             </div>
@@ -473,6 +655,22 @@ function PosterUpload() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
+              </div>
+
+              <div className="poster-upload-field">
+                <label htmlFor="poster-url">Link (optional)</label>
+                <input
+                  id="poster-url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
+                  placeholder="https://example.com/signup"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                />
+                <p className="poster-upload-field__hint">
+                  Shown as an off-site link button on the poster.
+                </p>
               </div>
 
               <div className="poster-upload-details-section">

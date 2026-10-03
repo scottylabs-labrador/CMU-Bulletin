@@ -19,6 +19,11 @@ service cloud.firestore {
       match /likedPosters/{posterId} {
         allow read, write: if request.auth.uid == userId;
       }
+
+      // Rules for the 'posterDrafts' sub-collection (private to the owner)
+      match /posterDrafts/{draftId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }

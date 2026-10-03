@@ -34,6 +34,13 @@
   flex-shrink: 0;
 }
 
+.poster-upload-field__hint {
+  margin: 0.35rem 0 0;
+  font-family: 'Satoshi-Regular', sans-serif;
+  font-size: 13px;
+  color: #7B7B7B;
+}
+
 .poster-upload-save-status {
   font-family: 'Satoshi-Medium', sans-serif;
   font-size: 14px;
@@ -626,7 +633,12 @@
   transition: background-color 0.2s, box-shadow 0.2s;
 }
 
-.poster-upload-cancel:hover {
+.poster-upload-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.poster-upload-cancel:hover:not(:disabled) {
   background: #f3f5f8;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
@@ -702,7 +714,8 @@
     align-items: stretch;
   }
 
-  .poster-upload-submit {
+  .poster-upload-submit,
+  .poster-upload-header__actions .poster-upload-cancel {
     width: 100%;
   }
 
