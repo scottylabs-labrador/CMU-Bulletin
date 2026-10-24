@@ -11,7 +11,6 @@ Your one-stop shop for everything happening at Carnegie Mellon. Never miss an ev
 - **Discover:** A beautiful, filterable grid of event posters.
 - **Share:** Upload your own posters in seconds.
 - **Save:** Like events to keep them on your personal profile.
-- **Engage:** Click any poster for a full-screen detailed view.
 
 ### Tech Stack
 
