@@ -10,11 +10,14 @@ import { auth, db } from './firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import AuthSignUp from './components/AuthSignUp';
 import AuthLogin from './components/AuthLogin';
+import AdminPage from './components/AdminPage';
 import Footer from './components/Footer';
+import { useIsAdmin } from './hooks/useIsAdmin';
 import { DEFAULT_POSTER_SORT, DEFAULT_POSTER_SORT_DIRECTION } from './utils/sortPosters';
 
 function App() {
   const [user, setUser] = useState(null);
+  const { isAdmin } = useIsAdmin(user);
   const [filterDate, setFilterDate] = useState('');
   const [filterLocations, setFilterLocations] = useState([]);
   const [filterTags, setFilterTags] = useState([]);
@@ -71,7 +74,6 @@ function App() {
   const activeCategory = pathSegments[0] === 'poster' || pathSegments.length === 0
     ? 'All'
     : pathSegments[0];
-  const isProfilePage = location.pathname === '/profile' || location.pathname.startsWith('/edit-poster');
   const isAuthPage = ['/authsignup', '/authlogin'].includes(location.pathname.toLowerCase());
 
   useEffect(() => {
@@ -89,6 +91,7 @@ function App() {
       {!isAuthPage && (
         <Navbar
           user={user}
+          isAdmin={isAdmin}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
         />
@@ -113,7 +116,6 @@ function App() {
                                             setSortBy={setSortBy}
                                             sortDirection={sortDirection}
                                             setSortDirection={setSortDirection} />} />
-          {/* <Route path="/" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} /> */}
           <Route path="/poster/:id" element={<MainPage
                                             user={user}
                                             activeCategory={activeCategory}
@@ -132,6 +134,15 @@ function App() {
                                             setSortBy={setSortBy}
                                             sortDirection={sortDirection}
                                             setSortDirection={setSortDirection} />} />
+          {/* Admin before /:category so /admin is not treated as a category slug. */}
+          <Route path="/admin" element={<AdminPage user={user} />} />
+          <Route path="/post" element={<PosterUpload user={user} />} />
+          <Route path="/authsignup" element={<AuthSignUp />} />
+          <Route path="/authlogin" element={<AuthLogin />} />
+          <Route path="/AuthSignUp" element={<AuthSignUp />} />
+          <Route path="/AuthLogin" element={<AuthLogin />} />
+          <Route path="/profile" element={<UserProfile searchQuery={searchQuery} setSearchQuery={setSearchQuery} availableTags={availableTags} />} />
+          <Route path="/edit-poster/:id" element={<EditPoster />} />
           <Route path="/:category" element={<MainPage
                                             user={user}
                                             activeCategory={activeCategory}
@@ -150,14 +161,6 @@ function App() {
                                             setSortBy={setSortBy}
                                             sortDirection={sortDirection}
                                             setSortDirection={setSortDirection} />} />
-          {/* <Route path="/:category" element={<PosterList filterDate={filterDate} filterLocations={filterLocations} filterTags={filterTags} searchQuery={searchQuery} user={user} viewMode={viewMode} />} /> */}
-          <Route path="/post" element={<PosterUpload user={user} />} />
-          <Route path="/authsignup" element={<AuthSignUp />} />
-          <Route path="/authlogin" element={<AuthLogin />} />
-          <Route path="/AuthSignUp" element={<AuthSignUp />} />
-          <Route path="/AuthLogin" element={<AuthLogin />} />
-          <Route path="/profile" element={<UserProfile searchQuery={searchQuery} setSearchQuery={setSearchQuery} availableTags={availableTags} />} />
-          <Route path="/edit-poster/:id" element={<EditPoster />} />
         </Routes>
       </main>
       {!isAuthPage && <Footer />}

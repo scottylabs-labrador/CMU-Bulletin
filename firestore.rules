@@ -3,11 +3,49 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow public read access to posters and user info
+    // Admins are keyed by lowercase email (not Firebase UID) for future CMU SSO/OIDC.
+    // Create/update/delete admin docs only in the Firebase console (or Admin SDK) —
+    // the client must never write this collection.
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function verifiedEmail() {
+      return signedIn()
+        && request.auth.token.email != null
+        && request.auth.token.email_verified == true;
+    }
+
+    function requesterEmail() {
+      return request.auth.token.email;
+    }
+
+    function isAdmin() {
+      return verifiedEmail()
+        && exists(/databases/$(database)/documents/admins/$(requesterEmail()));
+    }
+
+    function isUploader() {
+      return signedIn() && request.auth.uid == resource.data.uploaded_by;
+    }
+
+    function uploaderUnchanged() {
+      return request.resource.data.uploaded_by == resource.data.uploaded_by;
+    }
+
+    match /admins/{email} {
+      // An admin may read their own membership doc (used to gate /admin in the client).
+      allow read: if verifiedEmail() && requesterEmail() == email;
+      allow create, update, delete: if false;
+    }
+
+    // Public read. Write actions (create/like elsewhere) require auth.
+    // Update/delete: original uploader OR verified admin. uploaded_by cannot be changed.
     match /posters/{posterId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth.uid == resource.data.uploaded_by;
+      allow create: if signedIn();
+      allow update: if (isUploader() || isAdmin()) && uploaderUnchanged();
+      allow delete: if isUploader() || isAdmin();
     }
 
     match /users/{userId} {
@@ -15,12 +53,10 @@ service cloud.firestore {
       allow create: if request.auth.uid == userId;
       allow update: if request.auth.uid == userId;
 
-      // Rules for the 'likedPosters' sub-collection
       match /likedPosters/{posterId} {
         allow read, write: if request.auth.uid == userId;
       }
 
-      // Rules for the 'posterDrafts' sub-collection (private to the owner)
       match /posterDrafts/{draftId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }

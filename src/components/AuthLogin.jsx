@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+
+function getSafeReturnPath(candidate) {
+  if (typeof candidate !== 'string') return '/';
+  if (!candidate.startsWith('/') || candidate.startsWith('//')) return '/';
+  return candidate;
+}
 
 function AuthLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = getSafeReturnPath(location.state?.from);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -15,7 +23,7 @@ function AuthLogin() {
     try {
       setError(null);
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/');
+      navigate(returnTo);
     } catch (err) {
       console.error('Firebase Auth Error:', err);
       setError(err.message);

@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { auth } from '../firebase';
-import { signOut } from 'firebase/auth';
 
-function Navbar({ user, searchQuery, setSearchQuery }) {
+function Navbar({ user, isAdmin = false, searchQuery, setSearchQuery }) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const toggleDropdown = () => setIsOpen(!isOpen);  
-
-  const isProfilePage = location.pathname === '/profile';
-  const isAuthPage = location.pathname === '/authsignup' || location.pathname === '/authlogin';
+  const toggleDropdown = () => setIsOpen(!isOpen);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -43,6 +38,15 @@ function Navbar({ user, searchQuery, setSearchQuery }) {
         <div className="nav-buttons-container">
           {user ? (
             <>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`nav-auth-btn nav-auth-btn--login${location.pathname === '/admin' ? ' nav-admin-link--active' : ''}`}
+                >
+                  <span>Admin</span>
+                </Link>
+              )}
+
               <Link to="/post" className="createbtn nav-create-btn">
                 <img src="/plus-icon.svg" alt="" aria-hidden="true" />
                 <span>Create</span>
