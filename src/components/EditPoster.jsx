@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { db, auth } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import LocationSearchInput from './LocationSearchInput';
 import TagInput from './TagInput';
 import {
@@ -10,6 +11,7 @@ import {
   PREMADE_LOCATION_SET,
 } from './PosterFilters';
 import { normalizeExternalUrl } from '../utils/externalUrl';
+import { checkIsAdmin } from '../utils/adminAuth';
 import './PosterUpload.css';
 
 const daysOfWeekOptions = [
@@ -98,6 +100,8 @@ function processImageFile(file, onComplete, onInvalid) {
 function EditPoster() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const routeLocation = useLocation();
+  const returnTo = routeLocation.state?.from === '/admin' ? '/admin' : '/profile';
 
   const [title, setTitle] = useState('');
   const [organizer, setOrganizer] = useState('');
@@ -124,24 +128,35 @@ function EditPoster() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const fetchPoster = async () => {
+    let cancelled = false;
+
+    const load = async (currentUser) => {
       if (!id) return;
 
       try {
+        if (!currentUser) {
+          navigate('/authlogin', { state: { from: `/edit-poster/${id}` } });
+          return;
+        }
+
         const docRef = doc(db, 'posters', id);
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
-          navigate('/profile');
+          navigate(returnTo);
           return;
         }
 
         const data = docSnap.data();
+        const isOwner = data.uploaded_by === currentUser.uid;
+        const isAdminEditor = !isOwner && (await checkIsAdmin(currentUser));
 
-        if (auth.currentUser && data.uploaded_by !== auth.currentUser.uid) {
+        if (!isOwner && !isAdminEditor) {
           navigate('/profile');
           return;
         }
+
+        if (cancelled) return;
 
         setTitle(data.title || '');
         setOrganizer(data.organizer || '');
@@ -160,14 +175,22 @@ function EditPoster() {
         setDaysOfWeek(Array.isArray(data.days_of_week) ? data.days_of_week : []);
       } catch (err) {
         console.error('Failed to load poster:', err);
-        setError('Failed to load poster.');
+        if (!cancelled) setError('Failed to load poster.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    fetchPoster();
-  }, [id, navigate]);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setLoading(true);
+      load(currentUser);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [id, navigate, returnTo]);
 
   const handleImageFile = (file) => {
     const accepted = processImageFile(
@@ -247,6 +270,7 @@ function EditPoster() {
     setSuccess(false);
 
     try {
+      // Do not write uploaded_by — preserves the original uploader when an admin edits.
       const updatedData = {
         title,
         organizer,
@@ -254,7 +278,6 @@ function EditPoster() {
         url: normalizedUrl,
         location,
         category,
-        uploaded_by: auth.currentUser.uid,
         tags,
         repeating,
         image_filename: `${title.split(' ')[0] || 'untitled'}.png`,
@@ -284,7 +307,7 @@ function EditPoster() {
       await updateDoc(doc(db, 'posters', id), updatedData);
 
       setSuccess(true);
-      setTimeout(() => navigate('/profile'), 800);
+      setTimeout(() => navigate(returnTo), 800);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -320,7 +343,7 @@ function EditPoster() {
               <button
                 type="button"
                 className="poster-upload-cancel"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(returnTo)}
               >
                 Cancel
               </button>
